@@ -49,6 +49,14 @@ struct Point3D
 
 		return *this;
 	}
+	
+	Point3D rotate(float angle) const
+	{
+		float new_x = x *  cos(angle) + z * sin(angle);
+		float new_z = x * -sin(angle) + z * cos(angle);
+
+		return Point3D(new_x, y, new_z);
+	}
 
 	float x, y, z;
 };
@@ -97,25 +105,26 @@ struct Tree3D
 			factor_ = super->factor_;
 	}
 
-	void draw(sf::RenderTarget* target) const
+	void draw(sf::RenderTarget* target, float angle) const
 	{
 		sf::VertexArray va(sf::Quads, 0);
-		addToVertexArray(va, position_);
+		addToVertexArray(va, position_, angle);
 		
 		target->draw(va);
 	}
 
-	void addToVertexArray(sf::VertexArray& va, const Point3D& position) const
+	void addToVertexArray(sf::VertexArray& va, const Point3D& position, float angle) const
 	{
 		sf::Vertex v1, v2, v3, v4;
-		
-		const Point3D normal = direction_.get2DNormal().get2DNormalized();
+
+		const Point3D direction = direction_.rotate(angle);
+		const Point3D normal = direction.get2DNormal().get2DNormalized();
 		const Point3D bot_normal = (0.5f*thickness_) * normal;
 		Point3D top_normal = normal;
 		if (!subs_.empty())
 			top_normal = factor_ * bot_normal;
 
-		Point3D upper_mid = position + direction_;
+		Point3D upper_mid = position + direction;
 		Point3D upper_l = upper_mid - top_normal;
 		Point3D upper_r = upper_mid + top_normal;
 
@@ -123,6 +132,11 @@ struct Tree3D
 		v2.position = sf::Vector2f(upper_l.x, upper_l.y);
 		v3.position = sf::Vector2f(upper_r.x, upper_r.y);
 		v4.position = sf::Vector2f(position.x + bot_normal.x, position.y + bot_normal.y);
+
+		v1.color = sf::Color();
+		v2.color = sf::Color();
+		v3.color = sf::Color();
+		v4.color = sf::Color();
 
 		va.append(v1);
 		va.append(v2);
@@ -132,7 +146,7 @@ struct Tree3D
 		for (Tree3D* sub : subs_)
 		{
 			float sub_width = factor_ * thickness_ * 0.5f;
-			const Point3D& sub_direction = sub->direction_;
+			const Point3D& sub_direction = sub->direction_.rotate(angle);
 
 			Point3D sub_normal = sub_direction.get2DNormal().get2DNormalized();
 			Point3D sub_position;
@@ -163,7 +177,7 @@ struct Tree3D
 			va.append(v7);
 			va.append(v8);
 
-			sub->addToVertexArray(va, sub_position);
+			sub->addToVertexArray(va, sub_position, angle);
 		}
 	}
 
@@ -188,6 +202,23 @@ struct Tree3D
 		}
 	}
 
+	void computeGeometry()
+	{
+		vertices_.push_back(position_);
+		computeGeometry(vertices_, position_);
+	}
+
+	void computeGeometry(std::vector<Point3D>& vertices, const Point3D& position)
+	{
+		const Point3D next_position = position + direction_;
+		vertices.push_back(next_position);
+		
+		for (Tree3D* sub : subs_)
+		{
+			computeGeometry(vertices, next_position);
+		}
+	}
+
 	float factor_;
 	float thickness_;
 	Point3D position_;
@@ -195,6 +226,7 @@ struct Tree3D
 
 	Tree3D* super_;
 	std::vector<Tree3D*> subs_;
+	std::vector<Point3D> vertices_;
 };
 
 
@@ -207,10 +239,15 @@ int main()
     window.setVerticalSyncEnabled(true);
 
 	Tree3D tree(50.0f, 0.75f, Point3D(800.0f, 900.0f, 0.0f), Point3D(0.0f, -200.0f, 0.0f));
-	tree.growth(2, 4);
+	//tree.growth(2, 4);
+	tree.addSubTree(Point3D(-200, -200, 0.0f));
+	tree.addSubTree(Point3D(200, -200, 0.0f));
+
+	float angle = 0.0;
 
 	while (window.isOpen())
 	{
+		angle += 0.01f;
         sf::Event event;
 		while (window.pollEvent(event))
 		{
@@ -220,7 +257,7 @@ int main()
 
 		window.clear(sf::Color::Black);
 
-		tree.draw(&window);
+		tree.draw(&window, angle);
 
         window.display();
     }
