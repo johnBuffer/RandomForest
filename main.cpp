@@ -45,7 +45,7 @@ struct Point3D
 	Point3D getProjection() const
 	{
 		if (z != 0)
-			return Point3D(x / z, y / z, 0.0f);
+			return Point3D(x / z, y / z, 1.0f);
 
 		return *this;
 	}
@@ -107,78 +107,21 @@ struct Tree3D
 
 	void draw(sf::RenderTarget* target, float angle) const
 	{
-		sf::VertexArray va(sf::Quads, 0);
-		addToVertexArray(va, position_, angle);
+		sf::VertexArray va(sf::Points, vertices_.size());
 		
-		target->draw(va);
-	}
-
-	void addToVertexArray(sf::VertexArray& va, const Point3D& position, float angle) const
-	{
-		sf::Vertex v1, v2, v3, v4;
-
-		const Point3D direction = direction_.rotate(angle);
-		const Point3D normal = direction.get2DNormal().get2DNormalized();
-		const Point3D bot_normal = (0.5f*thickness_) * normal;
-		Point3D top_normal = normal;
-		if (!subs_.empty())
-			top_normal = factor_ * bot_normal;
-
-		Point3D upper_mid = position + direction;
-		Point3D upper_l = upper_mid - top_normal;
-		Point3D upper_r = upper_mid + top_normal;
-
-		v1.position = sf::Vector2f(position.x - bot_normal.x, position.y - bot_normal.y);
-		v2.position = sf::Vector2f(upper_l.x, upper_l.y);
-		v3.position = sf::Vector2f(upper_r.x, upper_r.y);
-		v4.position = sf::Vector2f(position.x + bot_normal.x, position.y + bot_normal.y);
-
-		v1.color = sf::Color();
-		v2.color = sf::Color();
-		v3.color = sf::Color();
-		v4.color = sf::Color();
-
-		va.append(v1);
-		va.append(v2);
-		va.append(v3);
-		va.append(v4);
-
-		for (Tree3D* sub : subs_)
+		uint32_t i(0);
+		for (const Point3D& p : vertices_)
 		{
-			float sub_width = factor_ * thickness_ * 0.5f;
-			const Point3D& sub_direction = sub->direction_.rotate(angle);
-
-			Point3D sub_normal = sub_direction.get2DNormal().get2DNormalized();
-			Point3D sub_position;
-
-			sf::Vertex v5, v6, v7, v8;
-
-			if (sub_direction.x > 0)
-			{
-				sub_position = upper_r - sub_width * sub_normal;
-
-				v5.position = sf::Vector2f(upper_l.x, upper_l.y);
-				v6.position = sf::Vector2f(upper_r.x - (2.0f * sub_width) * sub_normal.x, upper_r.y - (2.0f * sub_width) * sub_normal.y);
-				v7.position = sf::Vector2f(upper_r.x, upper_r.y);
-				v8.position = sf::Vector2f(upper_r.x, upper_r.y);
-			}
-			else
-			{
-				sub_position = upper_l + sub_width * sub_normal;
-
-				v5.position = sf::Vector2f(upper_r.x, upper_r.y);
-				v6.position = sf::Vector2f(upper_l.x + (2.0f * sub_width) * sub_normal.x, upper_l.y + (2.0f * sub_width) * sub_normal.y);
-				v7.position = sf::Vector2f(upper_l.x, upper_l.y);
-				v8.position = sf::Vector2f(upper_l.x, upper_l.y);
-			}
-
-			va.append(v5);
-			va.append(v6);
-			va.append(v7);
-			va.append(v8);
-
-			sub->addToVertexArray(va, sub_position, angle);
+			const Point3D& rotated = p.rotate(angle);
+			const Point3D& projected = rotated.getProjection();
+			va[i].position = sf::Vector2f(projected.x, projected.y);
+			++i;
 		}
+		
+		sf::RenderStates rs;
+		rs.transform.translate(position_.x, position_.y);
+
+		target->draw(va, rs);
 	}
 
 	void addSubTree(const Point3D& direction)
@@ -204,8 +147,8 @@ struct Tree3D
 
 	void computeGeometry()
 	{
-		vertices_.push_back(position_);
-		computeGeometry(vertices_, position_);
+		vertices_.push_back(Point3D());
+		computeGeometry(vertices_, Point3D());
 	}
 
 	void computeGeometry(std::vector<Point3D>& vertices, const Point3D& position)
@@ -215,7 +158,7 @@ struct Tree3D
 		
 		for (Tree3D* sub : subs_)
 		{
-			computeGeometry(vertices, next_position);
+			sub->computeGeometry(vertices, next_position);
 		}
 	}
 
@@ -238,10 +181,11 @@ int main()
     sf::RenderWindow window(sf::VideoMode(WinWidth, WinHeight), "Fractale", sf::Style::Default);
     window.setVerticalSyncEnabled(true);
 
-	Tree3D tree(50.0f, 0.75f, Point3D(800.0f, 900.0f, 0.0f), Point3D(0.0f, -200.0f, 0.0f));
+	Tree3D tree(10.0f, 0.75f, Point3D(800.0f, 450.0f, 50.0f), Point3D(0.0f, -20.0f, 0.0f));
 	//tree.growth(2, 4);
-	tree.addSubTree(Point3D(-200, -200, 0.0f));
-	tree.addSubTree(Point3D(200, -200, 0.0f));
+	tree.addSubTree(Point3D(-10, -10, 0.0f));
+	tree.addSubTree(Point3D(10, -10, 0.0f));
+	tree.computeGeometry();
 
 	float angle = 0.0;
 
