@@ -27,16 +27,11 @@ struct Tree
 		}
 
 		if (!current_join) {
-			Join* root = new Join(800, 900, -PI * 0.5f);
-			solver.joins.push_back(root);
-			generate(solver, root, stage_count - 1);
+			
 		}
 		else
 		{
-			const Vec2& parent_position = current_join->position.coords;
-			Join* new_join = new Join(800, 900, -PI * 0.5f);
-			solver.joins.push_back(root);
-			generate(solver, root, stage_count - 1);
+			
 		}
 	}
 };

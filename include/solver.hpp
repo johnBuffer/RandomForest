@@ -1,6 +1,7 @@
 #pragma once
 
 #include "join.hpp"
+#include "link.hpp"
 #include <vector>
 #include <iostream>
 
@@ -10,33 +11,34 @@ struct Solver
 
 	void update(float dt)
 	{
-		for (Join* j_ptr : joins) {
-			Join& j = *j_ptr;
-			// If no extremity, nothing to update
-			if (j.connected2) {
-				const float angle1 = j.getAngle1();
-				const float angle2 = j.getAngle2();
-				const float current_angle = angle2 - angle1;
-				const float delta = j.angle - current_angle;
-				const float target_angle = angle2 + delta * j.strength;
+		applyGravity();
 
-				const float dx = cos(target_angle);
-				const float dy = sin(target_angle);
-				const Vec2 v = Vec2(dx, dy) * j.length2;
-
-				j.connected2->position.moveTo(j.position.coords + v);
-			}
+		for (Link& l : links) {
+			l.update();
 		}
 
-		update_pts(dt);
+		for (Join& j : joins) {
+			j.update();
+		}
+
+		updatePoints(dt);
 	}
 
-	void update_pts(float dt)
+	void applyGravity()
 	{
-		for (Join* j_ptr : joins) {
-			j_ptr->position.update(dt);
+		for (VerletPoint::ptr pt : points) {
+			pt->acceleration += Vec2(0, 1000);
 		}
 	}
 
-	std::vector<Join*> joins;
+	void updatePoints(float dt)
+	{
+		for (VerletPoint::ptr pt : points) {
+			pt->update(dt);
+		}
+	}
+
+	std::vector<VerletPoint::ptr> points;
+	std::vector<Join> joins;
+	std::vector<Link> links;
 };

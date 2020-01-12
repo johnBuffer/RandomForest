@@ -1,10 +1,13 @@
 #pragma once
 
 #include "vec2.hpp"
+#include <memory>
 
 
 struct VerletPoint
 {
+	using ptr = std::shared_ptr<VerletPoint>;
+
 	// All to 0.0f
 	VerletPoint()
 		: coords()
@@ -52,6 +55,11 @@ struct VerletPoint
 			coords += v + acceleration * (dt * dt);
 			acceleration = Vec2(0.0f, 0.0f);
 		}
+	}
+
+	static ptr create(float x, float y)
+	{
+		return std::make_shared<VerletPoint>(x, y);
 	}
 
 	Vec2 coords;

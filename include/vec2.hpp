@@ -19,6 +19,17 @@ struct Vec2
 		x += v.x;
 		y += v.y;
 	}
+
+	float getLength() const
+	{
+		return sqrt(x*x + y*y);
+	}
+
+	Vec2 getNormalized() const
+	{
+		const float length = getLength();
+		return Vec2(x / length, y / length);
+	}
 };
 
 

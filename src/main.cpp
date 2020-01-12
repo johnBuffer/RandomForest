@@ -13,37 +13,42 @@ int main()
 	constexpr uint32_t WinHeight = 900;
 
     sf::RenderWindow window(sf::VideoMode(WinWidth, WinHeight), "Tree", sf::Style::Default);
-	window.setVerticalSyncEnabled(true);
-	window.setFramerateLimit(60);
+	//window.setVerticalSyncEnabled(true);
+	//window.setFramerateLimit(60);
 
 	Solver solver;
 
-	Join* j0 = new Join(800, 450, -PI * 0.25f);
-	Join* j1 = new Join(850, 350, 0.0f);
-	Join* j2 = new Join(900, 250, 0.0f);
+	VerletPoint::ptr p1 = VerletPoint::create(800, 800);
+	VerletPoint::ptr p2 = VerletPoint::create(850, 700);
+	VerletPoint::ptr p3 = VerletPoint::create(900, 600);
+	VerletPoint::ptr p4 = VerletPoint::create(800, 550);
+	VerletPoint::ptr p5 = VerletPoint::create(800, 450);
 
-	j0->position.moving = false;
-	j0->setConnection2(j1);
-	j0->strength = 0.01f;
-	j1->setConnection1(j0);
-	j1->setConnection2(j2);
-	j1->strength = 0.01f;
-	j2->setConnection1(j1);
+	p1->moving = false;
 
-	j0->position.acceleration = Vec2(0.0f, 10000.0f);
-	j1->position.acceleration = Vec2(0.0f, 10000.0f);
-	j2->position.acceleration = Vec2(0.0f, 10000.0f);
+	solver.points.push_back(p1);
+	solver.points.push_back(p2);
+	solver.points.push_back(p3);
+	solver.points.push_back(p4);
+	solver.points.push_back(p5);
 
-	solver.joins.push_back(j0);
-	solver.joins.push_back(j1);
-	solver.joins.push_back(j2);
+	solver.joins.push_back(Join(nullptr, p1, p2, -PI*0.5f + 0.2f, 0.1f));
+	solver.joins.push_back(Join(p1, p2, p3, 0.3f, 0.1f));
+	solver.joins.push_back(Join(p2, p3, p4, -0.3f, 0.1f));
+	solver.joins.push_back(Join(p3, p4, p5, -0.75f, 0.1f));
 
+	solver.links.push_back(Link(p1, p2));
+	solver.links.push_back(Link(p2, p3));
+	solver.links.push_back(Link(p3, p4));
+	solver.links.push_back(Link(p4, p5));
+
+	float time = 0.0f;
 
 	while (window.isOpen())
 	{
+		time += 0.016f;
         sf::Event event;
-		while (window.pollEvent(event))
-		{
+		while (window.pollEvent(event)) {
 			if (event.type == sf::Event::Closed)
 				window.close();
 			else if (event.type == sf::Event::KeyReleased) {
@@ -51,22 +56,29 @@ int main()
 			}
 		}
 
+		const float wind_intensity = rand()%5000;
+		for (VerletPoint::ptr pt : solver.points) {
+			pt->acceleration = Vec2(wind_intensity, 0.0f);
+		}
+
 		solver.update(0.008f);
 
 		const uint32_t n_joins = solver.joins.size();
 		sf::VertexArray va(sf::Lines, 0);
 		for (uint32_t i(0); i < n_joins; ++i) {
-			const Join& j = *solver.joins[i];
-			sf::Vertex vertex1;
-			vertex1.position = sf::Vector2f(j.position.coords.x, j.position.coords.y);
-			vertex1.color = sf::Color::White;
-			va.append(vertex1);
+			const Join& j = solver.joins[i];
+			if (j.point2) {
+				sf::Vertex vertex;
+				vertex.position = sf::Vector2f(j.point2->coords.x, j.point2->coords.y);
+				vertex.color = sf::Color::White;
+				va.append(vertex);
+			}
 
-			if (j.connected2) {
-				sf::Vertex vertex2;
-				vertex2.position = sf::Vector2f(j.connected2->position.coords.x, j.connected2->position.coords.y);
-				vertex2.color = sf::Color::White;
-				va.append(vertex2);
+			if (j.point3) {
+				sf::Vertex vertex;
+				vertex.position = sf::Vector2f(j.point3->coords.x, j.point3->coords.y);
+				vertex.color = sf::Color::White;
+				va.append(vertex);
 			}
 		}
 
@@ -74,13 +86,16 @@ int main()
 
 		window.draw(va);
 		for (uint32_t i(0); i < n_joins; ++i) {
-			const Join& j = *solver.joins[i];
-			const float r = 4.0f;
-			sf::CircleShape c(r, r);
-			c.setOrigin(r, r);
-			c.setFillColor(sf::Color::Green);
-			c.setPosition(j.position.coords.x, j.position.coords.y);
-			window.draw(c);
+			const Join& j = solver.joins[i];
+
+			if (j.point2) {
+				const float r = 4.0f;
+				sf::CircleShape c(r, r);
+				c.setOrigin(r, r);
+				c.setFillColor(sf::Color::Green);
+				c.setPosition(j.point2->coords.x, j.point2->coords.y);
+				window.draw(c);
+			}
 		}
 
         window.display();

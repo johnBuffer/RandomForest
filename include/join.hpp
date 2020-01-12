@@ -7,65 +7,83 @@
 struct Join
 {
 	Join()
-		: connected1(nullptr)
-		, connected2(nullptr)
+		: point1(nullptr)
+		, point2(nullptr)
+		, point3(nullptr)
 	{}
 
-	Join(float x, float y, float angle_)
-		: connected1(nullptr)
-		, connected2(nullptr)
-		, position(x, y)
+	Join(VerletPoint::ptr p1, VerletPoint::ptr p2, VerletPoint::ptr p3, float angle_, float strength_ = 1.0f)
+		: point1(p1)
+		, point2(p2)
+		, point3(p3)
 		, angle(angle_)
-	{}
+		, strength(strength_)
+	{
+	}
 
 	float getAngle1() const
 	{
-		if (!connected1) {
-			return 0.0f;
-		}
-
-		const Vec2 v1 = position - connected1->position;
-		const Vec2 v2 = Vec2(1.0f, 0.0f);
-		return getVec2Angle(v2, v1);
+		return getAngle(point2, point1);
 	}
 
 	float getAngle2() const
 	{
-		if (!connected2) {
-			return 0.0f;
+		return getAngle(point3, point2);
+	}
+
+	float getLength1() const
+	{
+		return getDistance(point1, point2);
+	}
+
+	float getLength2() const
+	{
+		return getDistance(point3, point2);
+	}
+
+	void update()
+	{
+		if (!point2 || !point3) {
+			return;
 		}
-		const Vec2 v1 = connected2->position - position;
-		const Vec2 v2 = Vec2(1.0f, 0.0f);
-		return getVec2Angle(v2, v);
+
+		const float angle1 = getAngle1();
+		const float angle2 = getAngle2();
+		const float current_angle = angle2 - angle1;
+		const float delta = angle - current_angle;
+		const float target_angle = angle2 + delta * strength;
+
+		const float dx = cos(target_angle);
+		const float dy = sin(target_angle);
+		const Vec2 v = Vec2(dx, dy) * getLength2();
+
+		point3->moveTo(point2->coords + v);
 	}
-
-	void update(float dt)
-	{
-
-	}
-
-	void setConnection1(Join* join1)
-	{
-		connected1 = join1;
-		const Vec2 v(connected1->position - position);
-		length1 = sqrt(v.x*v.x + v.y*v.y);
-	}
-
-	void setConnection2(Join* join2)
-	{
-		connected2 = join2;
-		const Vec2 v(connected2->position - position);
-		length2 = sqrt(v.x*v.x + v.y*v.y);
-	}
-
-	VerletPoint position;
 
 	float angle;
 	float strength;
 
-	Join* connected1;
-	Join* connected2;
+	VerletPoint::ptr point1;
+	VerletPoint::ptr point2;
+	VerletPoint::ptr point3;
 
-	float length1;
-	float length2;
+private:
+	float getAngle(VerletPoint::ptr p1, VerletPoint::ptr p2) const
+	{
+		if (!p1 || !p2) {
+			return 0.0f;
+		}
+
+		const Vec2 v1 = *p1 - *p2;
+		return getVec2Angle(Vec2(1.0f, 0.0f), v1);
+	}
+
+	float getDistance(VerletPoint::ptr p1, VerletPoint::ptr p2) const
+	{
+		if (!p1 || !p2) {
+			return 0.0f;
+		}
+
+		return getLength(*p1 - *p2);
+	}
 };

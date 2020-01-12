@@ -17,3 +17,8 @@ float getRandRange(float width)
 {
 	return (rand() % 1000 - 500) / 1000.0f * width;
 }
+
+float getLength(const Vec2& v)
+{
+	return sqrt(v.x*v.x + v.y*v.y);
+}
