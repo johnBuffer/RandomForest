@@ -12,12 +12,13 @@ struct Join
 		, point3(nullptr)
 	{}
 
-	Join(VerletPoint::ptr p1, VerletPoint::ptr p2, VerletPoint::ptr p3, float angle_, float strength_ = 1.0f)
+	Join(VerletPoint::ptr p1, VerletPoint::ptr p2, VerletPoint::ptr p3, float angle_, float length_, float strength_ = 1.0f)
 		: point1(p1)
 		, point2(p2)
 		, point3(p3)
 		, angle(angle_)
 		, strength(strength_)
+		, length(length_)
 	{
 	}
 
@@ -49,9 +50,9 @@ struct Join
 
 		const float angle1 = getAngle1();
 		const float angle2 = getAngle2();
-		const float current_angle = angle2 - angle1;
+		const float current_angle = fmod(angle2 - angle1, 2.0f*PI);
 		const float delta = angle - current_angle;
-		const float target_angle = angle2 + delta * strength;
+		const float target_angle = fmod(angle2 + delta * strength, 2.0f*PI);
 
 		const float dx = cos(target_angle);
 		const float dy = sin(target_angle);
@@ -62,6 +63,7 @@ struct Join
 
 	float angle;
 	float strength;
+	float length;
 
 	VerletPoint::ptr point1;
 	VerletPoint::ptr point2;

@@ -13,8 +13,10 @@ struct Solver
 	{
 		applyGravity();
 
-		for (Link& l : links) {
-			l.update();
+		for (uint32_t i(1U); i--;) {
+			for (Link& l : links) {
+				l.update();
+			}
 		}
 
 		for (Join& j : joins) {
@@ -22,6 +24,7 @@ struct Solver
 		}
 
 		updatePoints(dt);
+		stopPoints();
 	}
 
 	void applyGravity()
@@ -35,6 +38,13 @@ struct Solver
 	{
 		for (VerletPoint::ptr pt : points) {
 			pt->update(dt);
+		}
+	}
+
+	void stopPoints()
+	{
+		for (VerletPoint::ptr pt : points) {
+			pt->stop();
 		}
 	}
 

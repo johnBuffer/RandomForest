@@ -25,7 +25,7 @@ int main()
 	tree1.fork_amplitude = PI;
 	tree1.fork_count = 2U;
 
-	tree1.create(solver, 10, 800, 700);
+	tree1.create(solver, 10, 800, 600);
 
 	float time = 0.0f;
 
@@ -41,10 +41,10 @@ int main()
 			}
 		}
 
-		const float wind_intensity = rand()%1000;
+		/*const float wind_intensity = rand()%1000;
 		for (VerletPoint::ptr pt : solver.points) {
 			pt->acceleration = Vec2(wind_intensity, 0.0f);
-		}
+		}*/
 
 		solver.update(0.008f);
 

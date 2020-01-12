@@ -9,13 +9,13 @@ struct Link
 	Link()
 		: point1(nullptr)
 		, point2(nullptr)
-		, strength(0.1f)
+		, strength(0.5f)
 	{}
 
 	Link(VerletPoint::ptr p1, VerletPoint::ptr p2)
 		: point1(p1)
 		, point2(p2)
-		, strength(0.75f)
+		, strength(0.05f)
 	{
 		length = getLength(*p1 - *p2);
 	}
@@ -26,8 +26,14 @@ struct Link
 		const Vec2 v_normalized = v.getNormalized();
 		const float current_length = getLength(v);
 		const float delta = length - current_length;
+		const float amp = 1.0f * delta * strength;
 
-		point2->move(v_normalized * (-delta * strength));
+		const float mass_total = point1->mass + point2->mass;
+		const float mass_coef1 = point2->mass / mass_total;
+		const float mass_coef2 = point1->mass / mass_total;
+		//const float coef = (!point1->moving || !point2->moving) ? 1.0f : 0.5f;
+		point1->move(v_normalized *  mass_coef1 * amp);
+		point2->move(v_normalized * -mass_coef1 * amp);
 	}
 
 	VerletPoint::ptr point1;
