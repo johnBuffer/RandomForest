@@ -9,7 +9,7 @@ struct Link
 	Link()
 		: point1(nullptr)
 		, point2(nullptr)
-		, strength(0.5f)
+		, strength(0.1f)
 	{}
 
 	Link(VerletPoint::ptr p1, VerletPoint::ptr p2)

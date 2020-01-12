@@ -5,6 +5,7 @@
 #include <cmath>
 
 #include "solver.hpp"
+#include "tree.hpp"
 
 
 int main()
@@ -13,40 +14,24 @@ int main()
 	constexpr uint32_t WinHeight = 900;
 
     sf::RenderWindow window(sf::VideoMode(WinWidth, WinHeight), "Tree", sf::Style::Default);
-	//window.setVerticalSyncEnabled(true);
+	window.setVerticalSyncEnabled(true);
 	//window.setFramerateLimit(60);
 
 	Solver solver;
 
-	VerletPoint::ptr p1 = VerletPoint::create(800, 800);
-	VerletPoint::ptr p2 = VerletPoint::create(850, 700);
-	VerletPoint::ptr p3 = VerletPoint::create(900, 600);
-	VerletPoint::ptr p4 = VerletPoint::create(800, 550);
-	VerletPoint::ptr p5 = VerletPoint::create(800, 450);
+	Tree tree1;
+	tree1.branch_length = 100.0f;
+	tree1.branch_length_ratio = 0.8f;
+	tree1.fork_amplitude = PI;
+	tree1.fork_count = 2U;
 
-	p1->moving = false;
-
-	solver.points.push_back(p1);
-	solver.points.push_back(p2);
-	solver.points.push_back(p3);
-	solver.points.push_back(p4);
-	solver.points.push_back(p5);
-
-	solver.joins.push_back(Join(nullptr, p1, p2, -PI*0.5f + 0.2f, 0.1f));
-	solver.joins.push_back(Join(p1, p2, p3, 0.3f, 0.1f));
-	solver.joins.push_back(Join(p2, p3, p4, -0.3f, 0.1f));
-	solver.joins.push_back(Join(p3, p4, p5, -0.75f, 0.1f));
-
-	solver.links.push_back(Link(p1, p2));
-	solver.links.push_back(Link(p2, p3));
-	solver.links.push_back(Link(p3, p4));
-	solver.links.push_back(Link(p4, p5));
+	tree1.create(solver, 10, 800, 700);
 
 	float time = 0.0f;
 
 	while (window.isOpen())
 	{
-		time += 0.016f;
+		time += 0.008f;
         sf::Event event;
 		while (window.pollEvent(event)) {
 			if (event.type == sf::Event::Closed)
@@ -56,7 +41,7 @@ int main()
 			}
 		}
 
-		const float wind_intensity = rand()%5000;
+		const float wind_intensity = rand()%1000;
 		for (VerletPoint::ptr pt : solver.points) {
 			pt->acceleration = Vec2(wind_intensity, 0.0f);
 		}
