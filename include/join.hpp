@@ -11,26 +11,32 @@ struct Join
 		, connected2(nullptr)
 	{}
 
-	float getAngle() const
+	Join(float x, float y, float angle_)
+		: connected1(nullptr)
+		, connected2(nullptr)
+		, position(x, y)
+		, angle(angle_)
+	{}
+
+	float getAngle1() const
 	{
-		// If no connected1, we assume connected to the ground's normal
-		const Vec2 v1 = connected1 ? (position - connected1->position) : Vec2(0.0f, 1.0f);
-		const Vec2 v2 = connected2 ? (connected2->position - position) : Vec2(0.0f, 1.0f);
-		return getVec2Angle(v1, v2);
+		if (!connected1) {
+			return 0.0f;
+		}
+
+		const Vec2 v1 = position - connected1->position;
+		const Vec2 v2 = Vec2(1.0f, 0.0f);
+		return getVec2Angle(v2, v1);
 	}
 
-	float getBaseAngle() const
+	float getAngle2() const
 	{
-		// If no connected1, we assume connected to the ground's normal
-		const Vec2 v1 = connected1 ? (position - connected1->position) : Vec2(0.0f, 1.0f);
-		const Vec2 v2 = connected2 ? (connected2->position - position) : Vec2(1.0f, 0.0f);
-		return getVec2Angle(v1, v2);
-	}
-
-	float getAngleDelta() const
-	{
-		// Difference between target angle and actual angle
-		return angle - getAngle();
+		if (!connected2) {
+			return 0.0f;
+		}
+		const Vec2 v1 = connected2->position - position;
+		const Vec2 v2 = Vec2(1.0f, 0.0f);
+		return getVec2Angle(v2, v);
 	}
 
 	void update(float dt)
