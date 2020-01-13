@@ -5,6 +5,7 @@
 
 struct Branch
 {
+	float join_strength;
 	float length;
 	VerletPoint::ptr extremity;
 	VerletPoint::ptr base;
@@ -31,12 +32,12 @@ struct Tree
 
 		Branch branch = createBranch(solver, root);
 
-		generate(solver, branch, stage_count);
+		generate(solver, branch, 0U, stage_count);
 	}
 
-	void generate(Solver& solver, Branch last_branch, uint32_t stage_count)
+	void generate(Solver& solver, Branch last_branch, uint32_t stage_count, uint32_t max_stage)
 	{
-		if (!stage_count) {
+		if (stage_count >= max_stage) {
 			return;
 		}
 
@@ -44,11 +45,13 @@ struct Tree
 		for (uint32_t i(forks); i--;) {
 			float new_length = last_branch.length * branch_length_ratio;
 			float angle = getRandRange(fork_amplitude);
+			float join_strength = float(stage_count + 1.0f) / float(max_stage + 1.0f);
+
 			VerletPoint::ptr last_base = last_branch.base;
 			VerletPoint::ptr last_point = last_branch.extremity;
-			VerletPoint::ptr new_point = VerletPoint::create(last_point->coords.x + rand()%10, last_point->coords.y - new_length, stage_count + 1);
+			VerletPoint::ptr new_point = VerletPoint::create(last_point->coords.x, last_point->coords.y - new_length, stage_count + 1);
 
-			solver.joins.push_back(Join(last_base, last_point, new_point, angle, new_length, 0.05f));
+			solver.joins.push_back(Join(last_base, last_point, new_point, angle, new_length, 0.05f * join_strength));
 			solver.links.push_back(Link(last_point, new_point));
 			solver.points.push_back(new_point);
 
@@ -56,8 +59,9 @@ struct Tree
 			branch.length = new_length;
 			branch.base = last_point;
 			branch.extremity = new_point;
+			branch.join_strength = join_strength;
 
-			generate(solver, branch, stage_count - 1);
+			generate(solver, branch, stage_count+1, max_stage);
 		}
 	}
 

@@ -12,19 +12,15 @@ struct Solver
 	void update(float dt)
 	{
 		applyGravity();
-
+		
 		for (uint32_t i(1U); i--;) {
-			for (Link& l : links) {
-				l.update();
+			for (Join& j : joins) {
+				j.update();
 			}
 		}
 
-		for (Join& j : joins) {
-			j.update();
-		}
-
 		updatePoints(dt);
-		stopPoints();
+		//stopPoints();
 	}
 
 	void applyGravity()
