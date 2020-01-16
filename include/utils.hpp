@@ -15,8 +15,16 @@ float getVec2Angle(const Vec2& v1, const Vec2& v2)
 
 float getRandRange(float width)
 {
-	return (rand() % 1000 - 500) / 1000.0f * width;
+	constexpr uint32_t max_value = 10000;
+	return (rand() % max_value - max_value/2U) / float(max_value) * width;
 }
+
+float getRandUnder(float max)
+{
+	constexpr uint32_t max_value = 10000;
+	return (rand() % max_value) / float(max_value) * max;
+}
+
 
 float getLength(const Vec2& v)
 {

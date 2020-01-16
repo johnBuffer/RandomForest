@@ -40,7 +40,7 @@ struct Solver
 	void stopPoints()
 	{
 		for (VerletPoint::ptr pt : points) {
-			pt->stop();
+			//pt->stop();
 		}
 	}
 

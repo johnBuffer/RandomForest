@@ -9,12 +9,18 @@ struct Branch
 	float length;
 	VerletPoint::ptr extremity;
 	VerletPoint::ptr base;
+
+	void rotate(VerletPoint::ptr new_extremity)
+	{
+		base = extremity;
+		extremity = new_extremity;
+	}
 };
 
 
 struct Tree
 {
-	uint32_t fork_count;
+	float fork_probability;
 	float fork_angle;
 	float fork_amplitude;
 
@@ -22,6 +28,7 @@ struct Tree
 	float branch_length_ratio;
 	float branch_width;
 	float branch_width_ratio;
+	float branch_distortion;
 
 	void create(Solver& solver, uint32_t stage_count, float x, float y)
 	{
@@ -41,28 +48,32 @@ struct Tree
 			return;
 		}
 
-		uint32_t forks = 1U + rand() % fork_count;
-		for (uint32_t i(forks); i--;) {
-			float new_length = last_branch.length * branch_length_ratio;
-			float angle = getRandRange(fork_amplitude);
-			float join_strength = float(stage_count + 1.0f) / float(max_stage + 1.0f);
+		VerletPoint::ptr last_base = last_branch.base;
+		VerletPoint::ptr last_point = last_branch.extremity;
 
-			VerletPoint::ptr last_base = last_branch.base;
-			VerletPoint::ptr last_point = last_branch.extremity;
-			VerletPoint::ptr new_point = VerletPoint::create(last_point->coords.x, last_point->coords.y - new_length, stage_count + 1);
+		const float fork_rand = getRandUnder(1.0f);
+		// Here we fork
+		if (fork_rand < fork_probability) {
+			Branch branch = last_branch;
+			branch.length *= branch_length_ratio;
+			VerletPoint::ptr new_point = VerletPoint::create(last_point->coords.x, last_point->coords.y - branch.length, 10.0f);
+			branch.rotate(new_point);
+			const float angle = getRandRange(fork_angle);
+			solver.joins.push_back(Join(last_base, last_point, new_point, angle, branch.length, 0.15f));
 
-			solver.joins.push_back(Join(last_base, last_point, new_point, angle, new_length, 0.05f * join_strength));
-			solver.links.push_back(Link(last_point, new_point));
-			solver.points.push_back(new_point);
-
-			Branch branch;
-			branch.length = new_length;
-			branch.base = last_point;
-			branch.extremity = new_point;
-			branch.join_strength = join_strength;
-
-			generate(solver, branch, stage_count+1, max_stage);
+			generate(solver, branch, stage_count + 1U, max_stage);
 		}
+
+		// Continue the current branch
+		Branch branch = last_branch;
+		branch.length *= branch_length_ratio;
+		VerletPoint::ptr new_point = VerletPoint::create(last_point->coords.x, last_point->coords.y - branch.length, 10.0f);
+		branch.rotate(new_point);
+		const float angle = getRandRange(branch_distortion);
+		solver.joins.push_back(Join(last_base, last_point, new_point, angle, branch.length, 0.15f));
+		
+		generate(solver, branch, stage_count + 1U, max_stage);
+
 	}
 
 	Branch createBranch(Solver& solver, VerletPoint::ptr root)
