@@ -13,9 +13,16 @@ struct Solver
 	{
 		applyGravity();
 		
+		uint32_t debug_i = 0U;
 		for (uint32_t i(1U); i--;) {
 			for (Join& j : joins) {
 				j.update();
+			}
+		}
+
+		for (uint32_t i(1U); i--;) {
+			for (Link& l : links) {
+				l.update();
 			}
 		}
 
@@ -42,6 +49,12 @@ struct Solver
 		for (VerletPoint::ptr pt : points) {
 			//pt->stop();
 		}
+	}
+
+	void addJoin(Join& join)
+	{
+		joins.push_back(join);
+		std::cout << "Added join with angle " << joins.back().angle << std::endl;
 	}
 
 	std::vector<VerletPoint::ptr> points;

@@ -12,10 +12,10 @@ struct Link
 		, strength(1.0f)
 	{}
 
-	Link(VerletPoint::ptr p1, VerletPoint::ptr p2)
+	Link(VerletPoint::ptr p1, VerletPoint::ptr p2, float strength_ = 1.0f)
 		: point1(p1)
 		, point2(p2)
-		, strength(1.0f)
+		, strength(strength_)
 	{
 		length = getLength(*p1 - *p2);
 	}
