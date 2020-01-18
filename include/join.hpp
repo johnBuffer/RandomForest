@@ -49,18 +49,17 @@ struct Join
 			return;
 		}
 
-		const float current_angle = getCurrentAngle();
+		const float angle1 = getAngle1();
+		const float angle2 = getAngle2();
+		const float current_angle = point1 ? getVec2Angle(point2->coords - point1->coords, point3->coords - point2->coords) : getVec2Angle(Vec2(1.0f, 0.0f), point3->coords - point2->coords);
 		const float delta = angle - current_angle;
+		const float target_angle = angle2 + delta * strength;
 
-		/*std::cout << angle << std::endl;
-		std::cout << current_angle << std::endl;
-		std::cout << delta << std::endl;
-		std::cout << std::endl;*/
+		const float dx = cos(target_angle);
+		const float dy = sin(target_angle);
+		const Vec2 v = Vec2(dx, dy) * length;
 
-		const Vec2& current_position = point3->coords;
-		const Vec2 updated_position = rotate(current_position, delta * strength, point2->coords);
-
-		point3->moveTo(updated_position);
+		point3->moveTo(point2->coords + v);
 	}
 
 	float angle;

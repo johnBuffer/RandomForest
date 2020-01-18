@@ -19,16 +19,19 @@ float getVec2Angle(const Vec2& v1, const Vec2& v2)
 float getRandRange(float width)
 {
 	constexpr int32_t max_value = 10000;
-	const float val = (rand() % max_value - (max_value>>1)) / float(max_value) * width;
-	std::cout << "Range width: " << width << " generated: " << val << std::endl;
+	constexpr int32_t half = max_value / 2;
+	constexpr float div = 1.0f / float(max_value);
+	const float val = (rand() % max_value - half) * div * width;
 	return val;
 }
 
 
 float getRandUnder(float max)
 {
-	constexpr uint32_t max_value = 10000;
-	const float val = (rand() % max_value) / float(max_value) * max;
+	constexpr int32_t max_value = 10000;
+	constexpr int32_t half = max_value / 2;
+	constexpr float div = 1.0f / float(max_value);
+	const float val = (rand() % max_value) * div * max;
 	return val;
 }
 

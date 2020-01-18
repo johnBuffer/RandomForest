@@ -66,7 +66,7 @@ int main()
 				window.close();
 			else if (event.type == sf::Event::KeyReleased) {
 				if (event.key.code == sf::Keyboard::A) {
-					tree1.create(solver, 8, 800, 600);
+					tree1.create(solver, 16, 800, 600);
 				}
 				else if (event.key.code == sf::Keyboard::Space) {
 					solver.update(0.008f);
@@ -80,7 +80,7 @@ int main()
 		//p2->moveTo(rotate(p2->coords, 0.005f, p1->coords));
 
 		if (wind) {
-			const float force = 50.0f;
+			const float force = 5.0f;
 			const float wind_t = time * 0.2f;
 			const float wind_intensity_x = 100.0f * sin(wind_t) * sin(wind_t) + rand() % 30 - 15;
 			const float wind_intensity_y = 100.0f * sin(2.0f * wind_t) + rand() % 10 - 5;
@@ -89,7 +89,7 @@ int main()
 			}
 		}
 
-		solver.update(0.008f);
+		solver.update(0.016f);
 
 		const uint64_t n_joins = solver.joins.size();
 		sf::VertexArray va(sf::Lines, 0);
