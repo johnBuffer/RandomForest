@@ -50,7 +50,7 @@ struct Tree
 		VerletPoint::ptr last_base = last_branch.base;
 		VerletPoint::ptr last_point = last_branch.extremity;
 
-		const float join_strenght = 0.05f;
+		const float join_strenght = 0.15f;
 		const float link_strenght = 0.99f;
 		const float point_mass = float(max_stage) / float(stage_count * stage_count + 1.0f);
 

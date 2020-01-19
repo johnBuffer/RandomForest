@@ -52,7 +52,13 @@ struct Join
 		const float angle1 = getAngle1();
 		const float angle2 = getAngle2();
 		const float current_angle = point1 ? getVec2Angle(point2->coords - point1->coords, point3->coords - point2->coords) : getVec2Angle(Vec2(1.0f, 0.0f), point3->coords - point2->coords);
-		const float delta = angle - current_angle;
+		float delta = angle - current_angle;
+
+		if (std::abs(delta - last_delta) > PI) {
+			point3->reverse();
+			delta = last_delta;
+		}
+
 		const float target_angle = angle2 + delta * strength;
 
 		const float dx = cos(target_angle);

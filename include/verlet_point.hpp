@@ -70,6 +70,11 @@ struct VerletPoint
 		return std::make_shared<VerletPoint>(x, y, mass);
 	}
 
+	void reverse()
+	{
+		coords = last_coords;
+	}
+
 	Vec2 coords;
 	Vec2 last_coords;
 	Vec2 acceleration;
