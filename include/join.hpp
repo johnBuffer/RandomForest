@@ -58,6 +58,9 @@ struct Join
 			point3->reverse();
 			delta = last_delta;
 		}
+		else {
+			last_delta = delta;
+		}
 
 		const float target_angle = angle2 + delta * strength;
 

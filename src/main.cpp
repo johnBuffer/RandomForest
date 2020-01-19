@@ -23,11 +23,11 @@ int main()
 	Solver solver;
 
 	Tree tree1;
-	tree1.branch_length = 50.0f;
-	tree1.branch_length_ratio = 0.95f;
+	tree1.branch_length = 100.0f;
+	tree1.branch_length_ratio = 0.85f;
 	tree1.fork_amplitude = 0.75f * PI;
-	tree1.branch_distortion = PI * 0.5f;
-	tree1.fork_probability = 0.25f;
+	tree1.branch_distortion = PI * 0.25f;
+	tree1.fork_probability = 0.4f;
 
 	float current_position = 500.0f;
 
@@ -66,7 +66,7 @@ int main()
 				window.close();
 			else if (event.type == sf::Event::KeyReleased) {
 				if (event.key.code == sf::Keyboard::A) {
-					tree1.create(solver, 16, 800, 600);
+					tree1.create(solver, 16, 800, 800);
 				}
 				else if (event.key.code == sf::Keyboard::Space) {
 					solver.update(0.008f);
@@ -80,12 +80,12 @@ int main()
 		//p2->moveTo(rotate(p2->coords, 0.005f, p1->coords));
 
 		if (wind) {
-			const float force = 5.0f;
+			const float force = 0.2f;
 			const float wind_t = time * 0.2f;
-			const float wind_intensity_x = 100.0f * sin(wind_t) * sin(wind_t) + rand() % 30 - 15;
-			const float wind_intensity_y = 100.0f * sin(2.0f * wind_t) + rand() % 10 - 5;
+			const float wind_intensity_x = 40 - getRandRange(50);
+			const float wind_intensity_y = getRandRange(20);
 			for (VerletPoint::ptr pt : solver.points) {
-				pt->acceleration = Vec2(wind_intensity_x, wind_intensity_y) * force;
+				pt->applyForce(Vec2(wind_intensity_x, wind_intensity_y) * force);
 			}
 		}
 

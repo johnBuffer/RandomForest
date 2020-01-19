@@ -32,7 +32,7 @@ struct Solver
 	void applyGravity()
 	{
 		for (VerletPoint::ptr pt : points) {
-			pt->acceleration += Vec2(0, 1000);
+			pt->applyGravity(Vec2(0, 1000));
 		}
 	}
 
