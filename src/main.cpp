@@ -17,8 +17,8 @@ int main()
 	settings.antialiasingLevel = 8;
 
     sf::RenderWindow window(sf::VideoMode(WinWidth, WinHeight), "Tree", sf::Style::Default, settings);
-	window.setVerticalSyncEnabled(true);
-	//window.setFramerateLimit(60);
+	//window.setVerticalSyncEnabled(true);
+	window.setFramerateLimit(4);
 
 	Solver solver;
 
@@ -27,7 +27,7 @@ int main()
 	tree1.branch_length_ratio = 0.85f;
 	tree1.fork_amplitude = 0.75f * PI;
 	tree1.branch_distortion = PI * 0.25f;
-	tree1.fork_probability = 0.4f;
+	tree1.fork_probability = 0.0f;
 
 	float current_position = 500.0f;
 
