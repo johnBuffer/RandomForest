@@ -20,6 +20,12 @@ struct Vec2
 		y += v.y;
 	}
 
+	void operator-=(const Vec2& v)
+	{
+		x -= v.x;
+		y -= v.y;
+	}
+
 	float getLength() const
 	{
 		return sqrt(x*x + y*y);

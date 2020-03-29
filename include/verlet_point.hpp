@@ -14,6 +14,7 @@ struct VerletPoint
 		, last_coords()
 		, acceleration()
 		, mass(1.0f)
+		, mass_coef(1.0f)
 		, moving(true)
 	{}
 
@@ -22,6 +23,7 @@ struct VerletPoint
 		, last_coords(x, y)
 		, acceleration()
 		, mass(mass_)
+		, mass_coef(1.0f / mass_)
 		, moving(true)
 	{}
 
@@ -59,10 +61,21 @@ struct VerletPoint
 		if (0 && moving) {
 			const Vec2 v = coords - last_coords;
 			acceleration = acceleration -v * 100.0f;
+
 			last_coords = coords;
 			coords += v + acceleration * (dt * dt);
 			acceleration = Vec2(0.0f, 0.0f);
 		}
+	}
+
+	void applyGravity(const Vec2& gravity)
+	{
+		acceleration += gravity;
+	}
+
+	void applyForce(const Vec2& force)
+	{
+		acceleration += force * mass_coef;
 	}
 
 	static ptr create(float x, float y, float mass)
@@ -70,11 +83,17 @@ struct VerletPoint
 		return std::make_shared<VerletPoint>(x, y, mass);
 	}
 
+	void reverse()
+	{
+		coords = last_coords;
+	}
+
 	Vec2 coords;
 	Vec2 last_coords;
 	Vec2 acceleration;
 
-	float mass;
+	const float mass;
+	const float mass_coef;
 	bool moving;
 };
 

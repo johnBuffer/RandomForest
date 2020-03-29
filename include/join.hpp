@@ -51,12 +51,18 @@ struct Join
 		const float angle1 = getAngle1();
 		const float angle2 = getAngle2();
 		const float current_angle = point1 ? getVec2Angle(point2->coords - point1->coords, point3->coords - point2->coords) : getVec2Angle(Vec2(1.0f, 0.0f), point3->coords - point2->coords);
-		const float delta = angle - current_angle;
+		float delta = angle - current_angle;
 
-		float target_angle = 0.0f; 
+		if (std::abs(delta - last_delta) > PI) {
+			point3->reverse();
+			delta = last_delta;
+		}
+		else {
+			last_delta = delta;
+		}
 
-		target_angle = angle2 + delta * strength;
-	
+		const float target_angle = angle2 + delta * strength;
+
 		const float dx = cos(target_angle);
 		const float dy = sin(target_angle);
 		const Vec2 v = Vec2(dx, dy) * length;
@@ -81,6 +87,17 @@ private:
 
 		const Vec2 v1 = *p1 - *p2;
 		return getVec2Angle(Vec2(1.0f, 0.0f), v1);
+	}
+
+	float getCurrentAngle() const
+	{
+		const Vec2 v2 = point3->coords - point2->coords;
+		if (!point1) {
+			return getVec2Angle(Vec2(1.0f, 0.0f), v2);
+		}
+
+		const Vec2 v1 = point2->coords - point1->coords;
+		return getVec2Angle(v1, v2);
 	}
 
 	float getDistance(VerletPoint::ptr p1, VerletPoint::ptr p2) const
