@@ -59,8 +59,7 @@ struct Tree
 			VerletPoint::ptr new_point = VerletPoint::create(last_point->coords.x, last_point->coords.y - branch.length, 10.0f);
 			branch.rotate(new_point);
 			const float angle = getRandRange(fork_angle);
-			solver.joins.push_back(Join(last_base, last_point, new_point, angle, branch.length, 0.15f));
-
+			solver.joins.push_back(Join(last_base, last_point, new_point, angle, branch.length, 0.015f));
 			generate(solver, branch, stage_count + 1U, max_stage);
 		}
 
@@ -70,8 +69,7 @@ struct Tree
 		VerletPoint::ptr new_point = VerletPoint::create(last_point->coords.x, last_point->coords.y - branch.length, 10.0f);
 		branch.rotate(new_point);
 		const float angle = getRandRange(branch_distortion);
-		solver.joins.push_back(Join(last_base, last_point, new_point, angle, branch.length, 0.15f));
-		
+		solver.joins.push_back(Join(last_base, last_point, new_point, angle, branch.length, 0.015f));
 		generate(solver, branch, stage_count + 1U, max_stage);
 
 	}

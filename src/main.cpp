@@ -74,7 +74,7 @@ int main()
 				window.close();
 			else if (event.type == sf::Event::KeyReleased) {
 				if (event.key.code == sf::Keyboard::A) {
-					tree1.create(solver, 16, 800, 600);
+					tree1.create(solver, 2, 800, 600);
 				}
 				else {
 					wind = !wind;
