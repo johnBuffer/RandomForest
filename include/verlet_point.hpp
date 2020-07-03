@@ -77,7 +77,7 @@ struct VerletPoint
 		if (moving) {
 			const Vec2 v = coords - last_coords;
 			// Air friction
-			//acceleration = acceleration -v * 10.0f;
+			acceleration = acceleration -v * 20.0f;
 			last_coords = coords;
 			coords += v + acceleration * (dt * dt);
 			acceleration = Vec2(0.0f, 0.0f);

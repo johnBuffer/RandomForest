@@ -29,9 +29,10 @@ public:
 		return link;
 	}
 
-	Join::ptr createJoin(Link::ptr link_1, Link::ptr link_2, float target_angle)
+	template<typename... Args>
+	Join::ptr createJoin(Args&&... args)
 	{
-		Join::ptr join = Join::create(link_1, link_2, target_angle);
+		Join::ptr join = Join::create(args...);
 		m_joins.push_back(join);
 		return join;
 	}
@@ -53,9 +54,8 @@ public:
 				join->update(dt);
 			}
 			
-			const uint64_t links_count = m_links.size();
-			for (uint64_t i(0u); i < links_count; ++i) {
-				m_links[i]->update();
+			for (Link::ptr link : m_links) {
+				link->update();
 			}
 
 			for (VerletPoint::ptr pt : m_points) {
@@ -79,7 +79,19 @@ public:
 
 	void render(sf::RenderTarget& target)
 	{
-		const float join_radius = 4.0f;
+		sf::VertexArray links(sf::Lines, m_links.size() * 2);
+		uint64_t link_i = 0;
+		for (Link::ptr link : m_links) {
+			links[2 * link_i + 0].position = sf::Vector2f(link->point1->coords.x, link->point1->coords.y);
+			links[2 * link_i + 1].position = sf::Vector2f(link->point2->coords.x, link->point2->coords.y);
+
+			links[2 * link_i + 0].color = sf::Color::Green;
+			links[2 * link_i + 1].color = sf::Color::Green;
+			++link_i;
+		}
+		target.draw(links);
+
+		/*const float join_radius = 4.0f;
 		for (const Join::ptr join : m_joins) {
 			sf::CircleShape c(join_radius);
 			c.setOrigin(join_radius, join_radius);
@@ -96,7 +108,12 @@ public:
 			c.setFillColor(sf::Color::Yellow);
 			c.setPosition(pt->coords.x, pt->coords.y);
 			target.draw(c);
-		}
+		}*/
+	}
+
+	std::vector<VerletPoint::ptr>& getPoints()
+	{
+		return m_points;
 	}
 
 private:
