@@ -29,9 +29,9 @@ public:
 		return link;
 	}
 
-	Join::ptr createJoin(Link::ptr link_1, Link::ptr link_2)
+	Join::ptr createJoin(Link::ptr link_1, Link::ptr link_2, float target_angle)
 	{
-		Join::ptr join = Join::create(link_1, link_2);
+		Join::ptr join = Join::create(link_1, link_2, target_angle);
 		m_joins.push_back(join);
 		return join;
 	}
@@ -47,17 +47,34 @@ public:
 	{
 		applyGravity();
 
-		const uint32_t iterations_count = 4u;
+		const uint32_t iterations_count = 1u;
 		for (uint8_t i(iterations_count); i--;) {
-			for (VerletPoint::ptr pt : m_points) {
-				pt->update(dt);
+			for (Join::ptr join : m_joins) {
+				join->update(dt);
 			}
-
+			
 			const uint64_t links_count = m_links.size();
 			for (uint64_t i(0u); i < links_count; ++i) {
 				m_links[i]->update();
 			}
+
+			for (VerletPoint::ptr pt : m_points) {
+				pt->update(dt);
+			}
 		}
+	}
+
+	VerletPoint::ptr getPointAt(float x, float y)
+	{
+		const float dist_threshold = 20.0f;
+		for (VerletPoint::ptr pt : m_points) {
+			const float dist = (pt->coords - Vec2(x, y)).getLength();
+			if (dist < dist_threshold) {
+				return pt;
+			}
+		}
+
+		return nullptr;
 	}
 
 	void render(sf::RenderTarget& target)

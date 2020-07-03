@@ -25,8 +25,9 @@ float getRandUnder(float max)
 	return (rand() % max_value) / float(max_value) * max;
 }
 
-
 float getLength(const Vec2& v)
 {
 	return sqrt(v.x*v.x + v.y*v.y);
 }
+
+

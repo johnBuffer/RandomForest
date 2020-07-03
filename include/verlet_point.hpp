@@ -24,19 +24,27 @@ struct VerletPoint
 		, moving(true)
 	{}
 
-	void moveTo(float x, float y)
+	void moveTo(float x, float y, bool bypass = false)
 	{
-		if (moving) {
+		if (moving || bypass) {
 			coords.x = x;
 			coords.y = y;
 		}
 	}
 
-	void moveTo(const Vec2& p)
+	void moveTo(const Vec2& p, bool bypass = false)
 	{
-		if (moving) {
+		if (moving || bypass) {
 			coords.x = p.x;
 			coords.y = p.y;
+		}
+	}
+
+	void move(float x, float y)
+	{
+		if (moving) {
+			coords.x += x;
+			coords.y += y;
 		}
 	}
 
@@ -69,7 +77,7 @@ struct VerletPoint
 		if (moving) {
 			const Vec2 v = coords - last_coords;
 			// Air friction
-			acceleration = acceleration -v * 10.0f;
+			//acceleration = acceleration -v * 10.0f;
 			last_coords = coords;
 			coords += v + acceleration * (dt * dt);
 			acceleration = Vec2(0.0f, 0.0f);

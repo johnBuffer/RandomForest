@@ -12,25 +12,32 @@ int main()
 	constexpr uint32_t WinHeight = 900;
 
 	sf::ContextSettings settings;
-	settings.antialiasingLevel = 8;
+	//settings.antialiasingLevel = 8;
 	
     sf::RenderWindow window(sf::VideoMode(WinWidth, WinHeight), "Tree", sf::Style::Default, settings);
 	window.setVerticalSyncEnabled(true);
-	window.setFramerateLimit(60);
+	//window.setFramerateLimit(60);
 
 	float time = 0.0f;
 	bool wind = false;
 
 	Solver solver;
 
-	VerletPoint::ptr pt1 = solver.createPoint(WinWidth * 0.5f, 10.0f, 1.0f, false);
-	VerletPoint::ptr pt2 = solver.createPoint(WinWidth * 0.5f, 20.0f, 1.0f);
-	VerletPoint::ptr pt3 = solver.createPoint(WinWidth * 0.5f, 30.0f, 1.0f);
-	
-	Link::ptr link_1 = solver.createLink(pt1, pt2);
-	Link::ptr link_2 = solver.createLink(pt2, pt3);
+	const float link_length = 40.0f;
+	const uint32_t points_count = 5;
+	VerletPoint::ptr last_point = solver.createPoint(WinWidth * 0.5f, WinHeight - 100.0f, 1.0f, false);
+	Link::ptr last_link = nullptr;
+	for (uint32_t i(0); i < points_count; ++i) {
+		VerletPoint::ptr new_point = solver.createPoint(last_point->coords.x, last_point->coords.y - link_length, 1.0f);
+		Link::ptr new_link = solver.createLink(last_point, new_point);
+		last_point = new_point;
+		if (i > 0 && i < 40) {
+			solver.createJoin(last_link, new_link, 0.0f);
+		}
+		last_link = new_link;
+	}
 
-	Join::ptr jon = Join::create(link_1, link_2);
+	VerletPoint::ptr selected_point = nullptr;
 
 	while (window.isOpen())
 	{
@@ -49,6 +56,25 @@ int main()
 					wind = !wind;
 				}
 			}
+			else if (event.type == sf::Event::MouseButtonReleased) {
+				if (event.mouseButton.button == sf::Mouse::Left) {
+					selected_point = nullptr;
+				}
+				else {
+					if (selected_point) {
+						selected_point->moving = !selected_point->moving;
+					}
+				}
+			}
+			else if (event.type == sf::Event::MouseButtonPressed) {
+				if (event.mouseButton.button == sf::Mouse::Left) {
+					selected_point = solver.getPointAt(mouse_pos.x, mouse_pos.y);
+				}
+			}
+		}
+
+		if (selected_point) {
+			selected_point->moveTo(mouse_pos.x, mouse_pos.y, true);
 		}
 
 		solver.update();
