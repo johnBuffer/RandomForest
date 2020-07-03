@@ -8,7 +8,6 @@ struct VerletPoint
 {
 	using ptr = std::shared_ptr<VerletPoint>;
 
-	// All to 0.0f
 	VerletPoint()
 		: coords()
 		, last_coords()
@@ -49,6 +48,17 @@ struct VerletPoint
 		}
 	}
 
+	void moveAbs(const Vec2& p)
+	{
+		if (moving) {
+			coords.x += p.x;
+			coords.y += p.y;
+
+			last_coords.x += p.x;
+			last_coords.y += p.y;
+		}
+	}
+
 	void stop()
 	{
 		last_coords = coords;
@@ -56,9 +66,10 @@ struct VerletPoint
 
 	void update(float dt)
 	{
-		if (0 && moving) {
+		if (moving) {
 			const Vec2 v = coords - last_coords;
-			acceleration = acceleration -v * 100.0f;
+			// Air friction
+			acceleration = acceleration -v * 10.0f;
 			last_coords = coords;
 			coords += v + acceleration * (dt * dt);
 			acceleration = Vec2(0.0f, 0.0f);
