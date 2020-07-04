@@ -30,20 +30,24 @@ int main()
 	float wind_width = 200.0f;
 	float wind_force = 50.0f;
 
+	std::vector<Grass> grass;
 	std::vector<Wind> winds(4);
 
 	Solver solver;
 
-	for (float x(WinWidth*0.0f); x < WinWidth; x += 1.0f) {
-		Grass::add(solver, x, WinHeight);
-	}
+	sf::VertexArray va(sf::Quads);
 
+	for (float x(WinWidth * 0.0f); x < WinWidth; x += 1.0f) {
+		grass.push_back(Grass::add(solver, x, WinHeight + 50.0f));
+	}
 
 	for (float x(WinWidth*0.0f); x < WinWidth; x += 100.0f) {
 		Tree::add(solver, x, WinHeight);
 	}
 
 	VerletPoint::ptr selected_point = nullptr;
+
+	bool force = false;
 
 	while (window.isOpen())
 	{
@@ -67,16 +71,21 @@ int main()
 					selected_point = nullptr;
 				}
 				else {
-					if (selected_point) {
-						selected_point->moving = !selected_point->moving;
-					}
+					force = false;
 				}
 			}
 			else if (event.type == sf::Event::MouseButtonPressed) {
 				if (event.mouseButton.button == sf::Mouse::Left) {
 					selected_point = solver.getPointAt(mouse_pos.x, mouse_pos.y);
 				}
+				else {
+					force = true;
+				}
 			}
+		}
+
+		if (force) {
+			solver.applyForce(50.0f, mouse_pos.x, mouse_pos.y);
 		}
 
 		if (selected_point) {
@@ -92,9 +101,15 @@ int main()
 
 		solver.update();
 
+		va.clear();
+		for (Grass& g : grass) {
+			g.addToVa(va);
+		}
+
 		window.clear(sf::Color::Black);
 
-		solver.render(window);
+		//solver.render(window);
+		window.draw(va);
 
         window.display();
     }

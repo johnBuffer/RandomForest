@@ -34,7 +34,7 @@ struct Wind
 	{
 		wind_width = 10.0f + getRandUnder(200.0f);
 		wind_x = -wind_width * 0.5f;
-		wind_force = 0.0f + getRandUnder(1.0f);
+		wind_force = 1.0f + getRandUnder(1.0f);
 		wind_speed = 5.0f + getRandUnder(2.0f);
 	}
 };

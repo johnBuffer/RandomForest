@@ -77,6 +77,18 @@ public:
 		return nullptr;
 	}
 
+	void applyForce(float radius, float x, float y)
+	{
+		for (VerletPoint::ptr pt : m_points) {
+			const Vec2 v = pt->coords - Vec2(x, y);
+			const float dist = v.getLength();
+			const Vec2 normalized = v.getNormalized();
+			if (dist < radius) {
+				pt->move(0.01f * (radius - dist) * v);
+			}
+		}
+	}
+
 	void render(sf::RenderTarget& target)
 	{
 		sf::VertexArray links(sf::Lines, m_links.size() * 2);
