@@ -48,6 +48,11 @@ Vec2 operator*(const Vec2& v, float f)
 	return Vec2(v.x * f, v.y * f);
 }
 
+Vec2 operator*(float f, const Vec2& v)
+{
+	return Vec2(v.x * f, v.y * f);
+}
+
 
 
 

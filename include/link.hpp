@@ -23,6 +23,11 @@ struct Link
 		length = getLength(*p1 - *p2);
 	}
 
+	Vec2 getVec() const
+	{
+		return (point2->coords - point1->coords).getNormalized();
+	}
+
 	Vec2 update()
 	{
 		const Vec2 v = *point1 - *point2;

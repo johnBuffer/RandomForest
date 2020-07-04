@@ -10,6 +10,7 @@ struct Join
 	Join(Link::ptr link_1_, Link::ptr link_2_, float target_angle_, float strength_)
 		: target_angle(target_angle_)
 		, strength(strength_)
+		, last_delta(0.0f)
 	{
 		if (&(*link_1_->point1) == &(*link_2_->point1)) {
 			setPoints(link_1_->point2, link_1_->point1, link_2_->point2);
@@ -44,22 +45,42 @@ struct Join
 		const Vec2 normalized_v2 = v2.getNormalized() * link_length_2;
 
 		const float current_angle = getVec2Angle(v1, v2);
-		const float delta_angle = 0.5f * strength * (target_angle - current_angle);
+		float delta_angle = (target_angle - current_angle);
+		if (0 && std::abs(delta_angle - last_delta) > PI) {
+			pt_3->rollback();
+			//std::cout << "Need to stop" << std::endl;
+		}
+		else {
+			const float cos_a = cos(0.5f * strength * delta_angle);
+			const float sin_a = sin(0.5f * strength * delta_angle);
+			const float d_x = normalized_v2.x * cos_a - normalized_v2.y * sin_a;
+			const float d_y = normalized_v2.x * sin_a + normalized_v2.y * cos_a;
 
-		const float cos_a_1 = cos(delta_angle);
-		const float sin_a_1 = sin(delta_angle);
-		const float d_x = normalized_v2.x * cos_a_1 - normalized_v2.y * sin_a_1;
-		const float d_y = normalized_v2.x * sin_a_1 + normalized_v2.y * cos_a_1;
+			pt_3->moveTo(pt_2->coords + Vec2(d_x, d_y));
+			for (Join::ptr join : sub_joins) {
+				join->rotate(cos_a, sin_a, pt_2->coords);
+			}
 
-		//std::cout << d_x << " " << d_y << std::endl;
+			last_delta = delta_angle;
+		}
+	}
 
-		pt_3->moveTo(pt_2->coords + Vec2(d_x, d_y));
+	void addSub(Join::ptr join)
+	{
+		sub_joins.push_back(join);
+	}
 
-		/*const Vec2 vec_2(-v1.x, -v1.y);
-		const float d_x_2 = vec_2.x * cos_a_1 + vec_2.y * sin_a_1;
-		const float d_y_2 = -vec_2.x * sin_a_1 + vec_2.y * cos_a_1;*/
+	void rotate(float ca, float sa, const Vec2& origin)
+	{
+		const Vec2 v = pt_3->coords - origin;
+		const float d_x = v.x * ca - v.y * sa;
+		const float d_y = v.x * sa + v.y * ca;
 
-		//pt_1->moveTo(pt_2->coords + Vec2(d_x_2, d_y_2));
+		pt_3->moveTo(origin + Vec2(d_x, d_y));
+
+		for (Join::ptr join : sub_joins) {
+			join->rotate(ca, sa, origin);
+		}
 	}
 
 	template<typename... Args>
@@ -70,9 +91,12 @@ struct Join
 
 	float strength;
 	float target_angle;
+	float last_delta;
 
 	float link_length_1;
 	float link_length_2;
+
+	std::vector<Join::ptr> sub_joins;
 
 	VerletPoint::ptr pt_1;
 	VerletPoint::ptr pt_2;

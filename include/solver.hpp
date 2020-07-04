@@ -40,7 +40,7 @@ public:
 	void applyGravity()
 	{
 		for (VerletPoint::ptr pt : m_points) {
-			pt->acceleration.y  = 500.0f;
+			pt->acceleration.y = 500.0f * pt->mass;
 		}
 	}
 
@@ -54,9 +54,9 @@ public:
 				join->update(dt);
 			}
 			
-			for (Link::ptr link : m_links) {
+			/*for (Link::ptr link : m_links) {
 				link->update();
-			}
+			}*/
 
 			for (VerletPoint::ptr pt : m_points) {
 				pt->update(dt);
