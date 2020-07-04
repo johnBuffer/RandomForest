@@ -11,6 +11,8 @@
 
 int main()
 {
+	srand(time(0));
+
     constexpr uint32_t WinWidth = 1600;
 	constexpr uint32_t WinHeight = 900;
 
@@ -36,7 +38,10 @@ int main()
 		Grass::add(solver, x, WinHeight);
 	}
 
-	Tree::add(solver, WinWidth*0.5f, WinHeight - 100);
+
+	for (float x(WinWidth*0.0f); x < WinWidth; x += 100.0f) {
+		Tree::add(solver, x, WinHeight);
+	}
 
 	VerletPoint::ptr selected_point = nullptr;
 

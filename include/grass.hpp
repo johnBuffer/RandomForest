@@ -6,13 +6,13 @@ struct Grass
 {
 	static void add(Solver& solver, float x, float y)
 	{
-		float strength = 0.014f;
-		float link_length = 30.0f + rand() % 20;
+		float strength = 0.02f;
+		float link_length = 20.0f + rand() % 10;
 		const uint32_t points_count = 3;
 		VerletPoint::ptr last_point = solver.createPoint(x, y, 1.0f, false);
 		Link::ptr last_link = nullptr;
 		for (uint32_t i(0); i < points_count; ++i) {
-			VerletPoint::ptr new_point = solver.createPoint(last_point->coords.x, last_point->coords.y - link_length, 0.07f / float(i + 1), i > 0);
+			VerletPoint::ptr new_point = solver.createPoint(last_point->coords.x, last_point->coords.y - link_length, 0.02f / float(i + 1), i > 0);
 			Link::ptr new_link = solver.createLink(last_point, new_point);
 			last_point = new_point;
 			if (i > 0 && i < 40) {

@@ -45,12 +45,13 @@ struct Join
 		const Vec2 normalized_v2 = v2.getNormalized() * link_length_2;
 
 		const float current_angle = getVec2Angle(v1, v2);
-		float delta_angle = (target_angle - current_angle);
-		if (0 && std::abs(delta_angle - last_delta) > PI) {
+		const float delta_angle = (target_angle - current_angle);
+		float da;
+		if ( 0 && std::abs(delta_angle - last_delta) > PI) {
 			pt_3->rollback();
-			//std::cout << "Need to stop" << std::endl;
 		}
-		else {
+		else
+		{
 			const float cos_a = cos(0.5f * strength * delta_angle);
 			const float sin_a = sin(0.5f * strength * delta_angle);
 			const float d_x = normalized_v2.x * cos_a - normalized_v2.y * sin_a;

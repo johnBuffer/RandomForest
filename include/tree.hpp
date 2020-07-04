@@ -4,7 +4,7 @@
 
 const float branch_length = 250.0f;
 const float branch_length_reduction = 0.7f;
-const uint32_t max_depth = 8;
+const uint32_t max_depth = 6;
 const uint32_t fork_count = 3;
 const float fork_angle = 3.141592653f * 0.5f;
 
@@ -21,7 +21,6 @@ struct Tree
 {
 	static void add(Solver& solver, float x, float y)
 	{
-		srand(time(0));
 		VerletPoint::ptr root = solver.createPoint(x, y, 1.0f, false);
 		VerletPoint::ptr first = solver.createPoint(x, y - 10, 1.0f, false);
 		Link::ptr link = solver.createLink(root, first);
@@ -56,7 +55,7 @@ struct Tree
 		VerletPoint::ptr point = solver.createPoint(next_pt.x, next_pt.y, mass);
 		Link::ptr link = solver.createLink(branch.connector, point);
 
-		Join::ptr join = solver.createJoin(branch.link, link, angle, 0.01f);
+		Join::ptr join = solver.createJoin(branch.link, link, angle, 0.01f * depth);
 		if (branch.join) {
 			branch.join->addSub(join);
 		}
