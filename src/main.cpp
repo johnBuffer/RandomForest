@@ -39,7 +39,7 @@ int main()
 	bool clicking = false;
 
 	const float branch_length = 100.0f;
-	const float branch_length_ratio = 0.9f;
+	const float branch_length_ratio = 0.85f;
 	const float branch_width = 0.5f;
 
 	float current_length;
@@ -70,17 +70,19 @@ int main()
 
 		if (!branches.empty()) {
 			if (clicking) {
-				sf::Vector2f to_last_point = sf::Vector2f(mouse_pos.x, mouse_pos.y) - branches.back().nodes.back();
+				const sf::Vector2f current_point = sf::Vector2f(mouse_pos.x, mouse_pos.y);
+				const sf::Vector2f last_point = branches.back().nodes.back();
+				sf::Vector2f to_last_point = current_point - last_point;
 				const float length = getLength(to_last_point);
 
 				if (length > current_length) {
-					branches.back().nodes.emplace_back(mouse_pos.x, mouse_pos.y);
+					branches.back().nodes.emplace_back(last_point + current_length * getNormalized(to_last_point));
 					current_length *= branch_length_ratio;
 				}
 			}
 
 			uint64_t nodes_count = branches.back().nodes.size();
-			va = sf::VertexArray(sf::Quads, 4 * nodes_count);
+			va = sf::VertexArray(sf::TriangleStrip, 4 * nodes_count);
 			if (nodes_count > 1) {
 				for (uint64_t i(0); i < nodes_count - 1; ++i) {
 					const sf::Vector2f vec = branches.back().nodes[i + 1] - branches.back().nodes[i];
@@ -91,8 +93,8 @@ int main()
 
 					va[4 * i + 0].position = branches.back().nodes[i] + width * vec_normal;
 					va[4 * i + 1].position = branches.back().nodes[i] - width * vec_normal;
-					va[4 * i + 2].position = branches.back().nodes[i + 1] - width * branch_length_ratio * vec_normal;
-					va[4 * i + 3].position = branches.back().nodes[i + 1] + width * branch_length_ratio * vec_normal;
+					va[4 * i + 2].position = branches.back().nodes[i + 1] + width * branch_length_ratio * vec_normal;
+					va[4 * i + 3].position = branches.back().nodes[i + 1] - width * branch_length_ratio * vec_normal;
 				}
 			}
 		}
