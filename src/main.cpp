@@ -3,15 +3,28 @@
 #include <string>
 #include <sstream>
 #include <cmath>
-#include "solver.hpp"
-#include "grass.hpp"
-#include "tree.hpp"
-#include "wind.hpp"
+
+
+struct Branch
+{
+	std::vector<sf::Vector2f> nodes;
+};
+
+
+float getLength(const sf::Vector2f& v)
+{
+	return sqrt(v.x * v.x + v.y * v.y);
+}
+
+sf::Vector2f getNormalized(const sf::Vector2f& v)
+{
+	return v / getLength(v);
+}
 
 
 int main()
 {
-	srand(time(0));
+	//srand(time(0));
 
     constexpr uint32_t WinWidth = 1600;
 	constexpr uint32_t WinHeight = 900;
@@ -21,94 +34,71 @@ int main()
 	
     sf::RenderWindow window(sf::VideoMode(WinWidth, WinHeight), "Tree", sf::Style::Default, settings);
 	window.setVerticalSyncEnabled(true);
-	//window.setFramerateLimit(60);
 
-	float time = 0.0f;
-	bool wind = false;
-	float wind_x = 0.0f;
-	float wind_speed = 7.0f;
-	float wind_width = 200.0f;
-	float wind_force = 50.0f;
+	sf::Vector2i clic_pos;
+	bool clicking = false;
 
-	std::vector<Grass> grass;
-	std::vector<Wind> winds(4);
+	const float branch_length = 100.0f;
+	const float branch_length_ratio = 0.9f;
+	const float branch_width = 0.5f;
 
-	Solver solver;
+	float current_length;
 
-	sf::VertexArray va(sf::Quads);
+	std::vector<Branch> branches;
 
-	for (float x(WinWidth * 0.0f); x < WinWidth; x += 1.0f) {
-		grass.push_back(Grass::add(solver, x, WinHeight + 50.0f));
-	}
-
-	for (float x(WinWidth*0.0f); x < WinWidth; x += 100.0f) {
-		Tree::add(solver, x, WinHeight);
-	}
-
-	VerletPoint::ptr selected_point = nullptr;
-
-	bool force = false;
+	sf::VertexArray va;
 
 	while (window.isOpen())
 	{
 		auto mouse_pos = sf::Mouse::getPosition(window);
-		//p2->moveTo(mouse_pos.x, mouse_pos.y);
 
-		time += 0.008f;
         sf::Event event;
 		while (window.pollEvent(event)) {
-			if (event.type == sf::Event::Closed)
+			if (event.type == sf::Event::Closed) {
 				window.close();
-			else if (event.type == sf::Event::KeyReleased) {
-				if (event.key.code == sf::Keyboard::A) {
-				}
-				else {
-					wind = !wind;
-				}
-			}
-			else if (event.type == sf::Event::MouseButtonReleased) {
-				if (event.mouseButton.button == sf::Mouse::Left) {
-					selected_point = nullptr;
-				}
-				else {
-					force = false;
-				}
 			}
 			else if (event.type == sf::Event::MouseButtonPressed) {
-				if (event.mouseButton.button == sf::Mouse::Left) {
-					selected_point = solver.getPointAt(mouse_pos.x, mouse_pos.y);
-				}
-				else {
-					force = true;
-				}
+				clicking = true;
+				current_length = branch_length;
+				branches.emplace_back();
+				branches.back().nodes.emplace_back(mouse_pos.x, mouse_pos.y);
+			}
+			else if (event.type == sf::Event::MouseButtonReleased) {
+				clicking = false;
 			}
 		}
 
-		if (force) {
-			solver.applyForce(50.0f, mouse_pos.x, mouse_pos.y);
-		}
+		if (!branches.empty()) {
+			if (clicking) {
+				sf::Vector2f to_last_point = sf::Vector2f(mouse_pos.x, mouse_pos.y) - branches.back().nodes.back();
+				const float length = getLength(to_last_point);
 
-		if (selected_point) {
-			selected_point->moveTo(mouse_pos.x, mouse_pos.y, true);
-		}
-
-		if (wind) {
-			for (Wind& w : winds) {
-				w.apply(solver);
-				w.update(WinWidth);
+				if (length > current_length) {
+					branches.back().nodes.emplace_back(mouse_pos.x, mouse_pos.y);
+					current_length *= branch_length_ratio;
+				}
 			}
-		}
 
-		solver.update();
+			uint64_t nodes_count = branches.back().nodes.size();
+			va = sf::VertexArray(sf::Quads, 4 * nodes_count);
+			if (nodes_count > 1) {
+				for (uint64_t i(0); i < nodes_count - 1; ++i) {
+					const sf::Vector2f vec = branches.back().nodes[i + 1] - branches.back().nodes[i];
+					const float length = getLength(vec);
+					const sf::Vector2f vec_normalized = vec / length;
+					const sf::Vector2f vec_normal(-vec_normalized.y, vec_normalized.x);
+					const float width = length * branch_length_ratio * 0.5f;
 
-		va.clear();
-		for (Grass& g : grass) {
-			g.addToVa(va);
+					va[4 * i + 0].position = branches.back().nodes[i] + width * vec_normal;
+					va[4 * i + 1].position = branches.back().nodes[i] - width * vec_normal;
+					va[4 * i + 2].position = branches.back().nodes[i + 1] - width * branch_length_ratio * vec_normal;
+					va[4 * i + 3].position = branches.back().nodes[i + 1] + width * branch_length_ratio * vec_normal;
+				}
+			}
 		}
 
 		window.clear(sf::Color::Black);
 
-		//solver.render(window);
 		window.draw(va);
 
         window.display();
