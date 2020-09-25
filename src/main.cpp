@@ -3,6 +3,8 @@
 #include <string>
 #include <sstream>
 #include <cmath>
+#include "segment.hpp"
+#include "utils.hpp"
 
 
 struct Branch
@@ -10,43 +12,6 @@ struct Branch
 	std::vector<sf::Vector2f> nodes;
 };
 
-
-float getLength(const sf::Vector2f& v)
-{
-	return sqrt(v.x * v.x + v.y * v.y);
-}
-
-sf::Vector2f getNormalized(const sf::Vector2f& v)
-{
-	return v / getLength(v);
-}
-
-struct Segment
-{
-	Segment(const sf::Vector2f& p1_, const sf::Vector2f& p2_)
-		: p1(p1_)
-		, p2(p2_)
-		, v(getNormalized(p2 - p1))
-		, size(getLength(p2 - p1))
-	{}
-
-	sf::Vector2f p1;
-	sf::Vector2f p2;
-	sf::Vector2f v;
-	float size;
-};
-
-struct Projection
-{
-	float k;
-	sf::Vector2f point;
-};
-
-Projection getProjectionOf(const sf::Vector2f& point, const Segment& s)
-{
-	const float k = point.x * s.v.x + point.y * s.v.y - s.p1.x * s.v.x - s.v.y * s.p1.y;
-	return Projection{ k, s.p1 + k * s.v };
-}
 
 
 int main()
@@ -75,7 +40,7 @@ int main()
 
 	std::vector<sf::VertexArray> va;
 
-	Segment test_segment(sf::Vector2f(150, 200), sf::Vector2f(1500, 800));
+	Segment<sf::Vector2f> test_segment(sf::Vector2f(150, 200), sf::Vector2f(1500, 800));
 
 	while (window.isOpen())
 	{
@@ -99,10 +64,10 @@ int main()
 					auto& nodes = branch.nodes;
 					if (nodes_count > 1) {
 						for (uint64_t i(0); i < nodes_count - 1; ++i) {
-							const Segment s(nodes[i], nodes[i + 1]);
-							const Projection p = getProjectionOf(current_point, s);
+							const Segment<sf::Vector2f> s(nodes[i], nodes[i + 1]);
+							const Segment<sf::Vector2f>::Projection p = s.getProjectionOf(current_point);
 							if (p.k >= 0.0f && p.k <= s.size) {
-								const float dist = getLength(p.point - current_point);
+								const float dist = Utils::getLength(p.point - current_point);
 								if (dist < min_dist || min_dist < 0.0f) {
 									min_dist = dist;
 									min_pos = p.point;
@@ -126,10 +91,10 @@ int main()
 			if (clicking) {
 				const sf::Vector2f last_point = branches.back().nodes.back();
 				sf::Vector2f to_last_point = current_point - last_point;
-				const float length = getLength(to_last_point);
+				const float length = Utils::getLength(to_last_point);
 
 				if (length > current_length) {
-					branches.back().nodes.emplace_back(last_point + current_length * getNormalized(to_last_point));
+					branches.back().nodes.emplace_back(last_point + current_length * Utils::getNormalized(to_last_point));
 					current_length *= branch_length_ratio;
 				}
 			}
@@ -142,7 +107,7 @@ int main()
 				if (nodes_count > 1) {
 					for (uint64_t i(0); i < nodes_count - 1; ++i) {
 						const sf::Vector2f vec = nodes[i + 1] - nodes[i];
-						const float length = getLength(vec);
+						const float length = Utils::getLength(vec);
 						const sf::Vector2f vec_normalized = vec / length;
 						const sf::Vector2f vec_normal(-vec_normalized.y, vec_normalized.x);
 						const float width = length * branch_length_ratio * 0.5f;
@@ -163,10 +128,10 @@ int main()
 			auto& nodes = branch.nodes;
 			if (nodes_count > 1) {
 				for (uint64_t i(0); i < nodes_count - 1; ++i) {
-					const Segment s(nodes[i], nodes[i+1]);
-					const Projection p = getProjectionOf(current_point, s);
+					const Segment<sf::Vector2f> s(nodes[i], nodes[i+1]);
+					const Segment<sf::Vector2f>::Projection p = s.getProjectionOf(current_point);
 					if (p.k >= 0.0f && p.k <= s.size) {
-						const float dist = getLength(p.point - current_point);
+						const float dist = Utils::getLength(p.point - current_point);
 						if (dist < min_dist || min_dist < 0.0f) {
 							min_dist = dist;
 							min_pos = p.point;
