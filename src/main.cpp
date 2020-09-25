@@ -5,6 +5,7 @@
 #include <cmath>
 #include "segment.hpp"
 #include "utils.hpp"
+#include "tree2.hpp"
 
 
 struct Branch
