@@ -46,7 +46,7 @@ int main()
 	while (window.isOpen())
 	{
 		auto mouse_pos = sf::Mouse::getPosition(window);
-		const sf::Vector2f current_point = sf::Vector2f(mouse_pos.x, mouse_pos.y);
+		const sf::Vector2f current_point = sf::Vector2f(static_cast<float>(mouse_pos.x), static_cast<float>(mouse_pos.y));
 
         sf::Event event;
 		while (window.pollEvent(event)) {
