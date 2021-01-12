@@ -1,4 +1,6 @@
 #pragma once
+#include <cmath>
+
 
 struct Vec2
 {
