@@ -3,8 +3,11 @@
 
 
 template<typename T>
-class Index
+struct Index
 {
+	uint64_t index;
+	std::vector<T>* container;
+
 	Index()
 		: index(0)
 		, container(nullptr)
@@ -14,7 +17,7 @@ class Index
 
 	Index(uint64_t i, std::vector<T>& cont)
 		: index(i)
-		, container(cont)
+		, container(&cont)
 	{}
 
 	explicit operator bool() const
@@ -46,8 +49,5 @@ class Index
 	{
 		return &getObject();
 	}
-
-	uint64_t index;
-	std::vector<T>* container;
 };
 
