@@ -26,10 +26,24 @@ int main()
 
 	Index<Node> p1 = solver.addNode(800.0f, 800.0f);
 	Index<Node> p2 = solver.addNode(800.0f, 700.0f);
+	Index<Node> p3 = solver.addNode(800.0f, 600.0f);
+	Index<Node> p4 = solver.addNode(800.0f, 500.0f);
+	Index<Node> p5 = solver.addNode(800.0f, 400.0f);
+
+	p1->is_static = true;
+	p2->is_static = true;
 
 	Index<Segment> s1 = solver.addSegment(p1, p2);
+	Index<Segment> s2 = solver.addSegment(p2, p3);
+	Index<Segment> s3 = solver.addSegment(p3, p4);
+	Index<Segment> s4 = solver.addSegment(p4, p5);
+
+	Index<Joint> j1 = solver.addJoint(s1, s2, 0.0f, 30.0f);
+	Index<Joint> j2 = solver.addJoint(s2, s3, 0.0f, 30.0f);
+	Index<Joint> j3 = solver.addJoint(s3, s4, 0.0f, 30.0f);
 
 	float time = 0.0f;
+	const float dt = 0.016f;
 
 	bool clicking = false;
 	Node* selected = nullptr;
@@ -38,7 +52,7 @@ int main()
 	{
 		const sf::Vector2i mouse_pos = sf::Mouse::getPosition(window);
 
-		time += 0.008f;
+		time += dt;
         sf::Event event;
 		while (window.pollEvent(event)) {
 			if (event.type == sf::Event::Closed) {
@@ -48,11 +62,13 @@ int main()
 				clicking = true;
 				selected = mouse_controller.getSelected(mouse_pos);
 			}
-			else if (event.type == sf::Event::MouseButtonPressed) {
-				clicking = true;
-				selected = mouse_controller.getSelected(mouse_pos);
+			else if (event.type == sf::Event::MouseButtonReleased) {
+				clicking = false;
+				selected = nullptr;
 			}
 		}
+
+		solver.update(dt);
 
 		if (selected) {
 			selected->position = MouseController::vec2i_to_vec2f(mouse_pos);

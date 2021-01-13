@@ -5,7 +5,11 @@
 
 struct Node
 {
+	// Euler data
 	Vec2  position;
+	Vec2  velocity;
+	Vec2  acceleration;
+
 	bool  is_static;
 	float mass;
 
@@ -20,6 +24,30 @@ struct Node
 		, is_static(false)
 		, mass(m)
 	{}
+
+	void applyForce(const Vec2& force)
+	{
+		acceleration += force / mass;
+	}
+
+	void accelerate(const Vec2& acc)
+	{
+		acceleration += acc;
+	}
+
+	void integrate(float dt)
+	{
+		if (!is_static) {
+			velocity += acceleration * dt;
+			position += velocity * dt;
+			acceleration = Vec2();
+		}
+	}
+
+	void counterVelocity(const Vec2& dir, float amount)
+	{
+		velocity -= dir * amount;
+	}
 };
 
 struct Segment
@@ -43,4 +71,11 @@ struct Joint
 
 	float target;
 	float strength;
+
+	Joint(Index<Segment> s_1, Index<Segment> s_2, float target_, float strength_)
+		: segment_1(s_1)
+		, segment_2(s_2)
+		, target(target_)
+		, strength(strength_)
+	{}
 };

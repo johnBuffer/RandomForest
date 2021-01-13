@@ -38,6 +38,7 @@ struct PhysicRenderer
 
 			va[2 * i + 0].color = sf::Color::White;
 			va[2 * i + 1].color = sf::Color::White;
+			++i;
 		}
 
 		target.draw(va);

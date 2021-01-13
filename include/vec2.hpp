@@ -39,6 +39,16 @@ struct Vec2
 		return Vec2(x / length, y / length);
 	}
 
+	Vec2 getNormal() const
+	{
+		return Vec2(-y, x);
+	}
+
+	float dot(const Vec2& v) const
+	{
+		return x * v.x + y * v.y;
+	}
+
 	void rotate(const Vec2& origin, float angle)
 	{
 		const Vec2 v(x - origin.x, y - origin.y);
@@ -69,5 +79,10 @@ Vec2 operator-(const Vec2& v1, const Vec2& v2)
 Vec2 operator*(const Vec2& v, float f)
 {
 	return Vec2(v.x * f, v.y * f);
+}
+
+Vec2 operator/(const Vec2& v, float f)
+{
+	return Vec2(v.x / f, v.y / f);
 }
 

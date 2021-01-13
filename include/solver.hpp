@@ -23,18 +23,71 @@ struct Solver
 		return Index<Segment>(id, segments);
 	}
 
+	Index<Joint> addJoint(Index<Segment>& segment_1, Index<Segment>& segment_2, float target, float strength)
+	{
+		const uint64_t id = joints.size();
+		joints.emplace_back(segment_1, segment_2, target, strength);
+		return Index<Joint>(id, joints);
+	}
+
+	void update(float dt)
+	{
+		applyGravity();
+		for (Joint& j : joints) {
+			update(j, dt);
+		}
+
+		for (Segment& s : segments) {
+			update(s, dt);
+		}
+
+		for (Node& n : nodes) {
+			n.integrate(dt);
+		}
+	}
+
+	void update(Segment& segment, float dt)
+	{
+		Node& p_1 = *(segment.point_1);
+		Node& p_2 = *(segment.point_2);
+
+		const Vec2 v = p_2.position - p_1.position;
+		const Vec2 v_nrm = v.getNormalized();
+		const float delta = 0.5f * (segment.length - v.getLength());
+
+		if (!p_1.is_static) {
+			p_1.position -= v_nrm * delta;
+			p_1.velocity -= v_nrm * delta;
+		}
+
+		if (!p_2.is_static) {
+			p_2.position += v_nrm * delta;
+			p_2.velocity += v_nrm * delta;
+		}
+	}
+
 	void update(Joint& joint, float dt)
 	{
-		Node& p11 = *(joint.segment_1->point_1);
-		Node& p12 = *(joint.segment_1->point_2);
-		Node& p21 = *(joint.segment_2->point_1);
-		Node& p22 = *(joint.segment_2->point_2);
+		Node& p_11 = *(joint.segment_1->point_1);
+		Node& p_12 = *(joint.segment_1->point_2);
+		Node& p_21 = *(joint.segment_2->point_1);
+		Node& p_22 = *(joint.segment_2->point_2);
 		
-		const Vec2 v_1 = p11.position - p12.position;
-		const Vec2 v_2 = p21.position - p22.position;
+		const Vec2 v_1 = p_11.position - p_12.position;
+		const Vec2 v_2 = p_21.position - p_22.position;
 		const float angle = Vec2::getAngle(v_1, v_2);
 		const float delta = joint.target - angle;
 
-		p22.position.rotate(p21.position, delta * joint.strength * dt);
+		const Vec2 old_position = p_22.position;
+		p_22.position.rotate(p_21.position, delta * joint.strength * dt);
+		p_22.velocity += p_22.position - old_position;
+	}
+
+	void applyGravity()
+	{
+		const Vec2 gravity(0.0f, 1000.0f);
+		for (Node& n : nodes) {
+			n.accelerate(gravity);
+		}
 	}
 };
