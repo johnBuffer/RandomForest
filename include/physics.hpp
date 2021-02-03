@@ -7,7 +7,7 @@ struct Node
 {
 	// Euler data
 	Vec2  position;
-	Vec2  velocity;
+	Vec2  old_position;
 	Vec2  acceleration;
 
 	bool  is_static;
@@ -15,12 +15,14 @@ struct Node
 
 	Node()
 		: position()
+		, old_position()
 		, is_static(false)
 		, mass(1.0f)
 	{}
 
 	Node(float x, float y, float m = 1.0f)
 		: position(x, y)
+		, old_position(x, y)
 		, is_static(false)
 		, mass(m)
 	{}
@@ -38,15 +40,12 @@ struct Node
 	void integrate(float dt)
 	{
 		if (!is_static) {
-			velocity += acceleration * dt;
-			position += velocity * dt;
-			acceleration = Vec2();
-		}
-	}
+			const Vec2 vel = position - old_position;
+			old_position = position;
 
-	void counterVelocity(const Vec2& dir, float amount)
-	{
-		velocity -= dir * amount;
+			position += (vel + acceleration * dt) * dt;
+			acceleration = Vec2(0.0f, 0.0f);
+		}
 	}
 };
 

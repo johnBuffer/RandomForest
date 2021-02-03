@@ -33,12 +33,15 @@ struct Solver
 	void update(float dt)
 	{
 		applyGravity();
-		for (Joint& j : joints) {
-			update(j, dt);
-		}
 
-		for (Segment& s : segments) {
-			update(s, dt);
+		for (uint32_t i(8); i--;) {
+			for (Joint& j : joints) {
+				update(j, dt);
+			}
+
+			for (Segment& s : segments) {
+				update(s, dt);
+			}
 		}
 
 		for (Node& n : nodes) {
@@ -53,16 +56,14 @@ struct Solver
 
 		const Vec2 v = p_2.position - p_1.position;
 		const Vec2 v_nrm = v.getNormalized();
-		const float delta = 0.5f * (segment.length - v.getLength());
+		const float delta = 0.25f * (segment.length - v.getLength());
 
 		if (!p_1.is_static) {
 			p_1.position -= v_nrm * delta;
-			p_1.velocity -= v_nrm * delta;
 		}
 
 		if (!p_2.is_static) {
 			p_2.position += v_nrm * delta;
-			p_2.velocity += v_nrm * delta;
 		}
 	}
 
@@ -76,16 +77,20 @@ struct Solver
 		const Vec2 v_1 = p_11.position - p_12.position;
 		const Vec2 v_2 = p_21.position - p_22.position;
 		const float angle = Vec2::getAngle(v_1, v_2);
-		const float delta = joint.target - angle;
+		const float delta = 0.5f * (joint.target - angle);
 
-		const Vec2 old_position = p_22.position;
-		p_22.position.rotate(p_21.position, delta * joint.strength * dt);
-		p_22.velocity += p_22.position - old_position;
+		if (!p_11.is_static) {
+			p_11.position.rotate(p_12.position, -delta * joint.strength);
+		}
+
+		if (!p_22.is_static) {
+			p_22.position.rotate(p_21.position, delta * joint.strength);
+		}
 	}
 
 	void applyGravity()
 	{
-		const Vec2 gravity(0.0f, 1000.0f);
+		const Vec2 gravity(0.0f, 100.0f);
 		for (Node& n : nodes) {
 			n.accelerate(gravity);
 		}
