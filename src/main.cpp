@@ -6,7 +6,6 @@
 
 #include "tree.hpp"
 #include "mouse_controller.hpp"
-#include "physic_renderer.hpp"
 
 
 int main()
@@ -20,7 +19,7 @@ int main()
     sf::RenderWindow window(sf::VideoMode(WinWidth, WinHeight), "Tree", sf::Style::Default, settings);
 	window.setFramerateLimit(60);
 
-	
+	Tree tree;
 
 	while (window.isOpen())
 	{

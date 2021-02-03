@@ -1,36 +1,61 @@
 #pragma once
 #include <vector>
+#include <vec2.hpp>
 
-
-struct Vec2
+struct Node
 {
-	float x, y;
+	Vec2 pos;
+	float angle;
+	float length;
 
-	Vec2()
-		: x(0.0f)
-		, y(0.0f)
+	Node()
+		: pos()
+		, angle(0.0f)
+		, length(0.0f)
 	{}
+
+	Node(float x, float y, float a, float l)
+		: pos(x, y)
+		, angle(a)
+		, length(l)
+	{}
+};
+
+
+struct TreeConf
+{
+	float branch_deviation;
+	float branch_split_angle;
+	float branch_split_var;
+	float branch_length;
+	float branch_length_ratio;
+	float branch_split_proba;
+};
+
+
+struct GrowthResult
+{
+	bool split;
+	Node node;
 };
 
 
 struct Branch
 {
-	Vec2 position;
-	float angle;
-	float length;
-
-	std::vector<Branch> subs;
+	Node current_node;
 
 	Branch()
-		: position()
-		, angle(0.0f)
-		, length(0.0f)
+		: current_node()
 	{}
 
 	Branch(const Vec2& pos, float a, float l)
-		: angle(a)
-		, length(l)
+		: current_node(pos.x, pos.y, a, l)
 	{}
+
+	GrowthResult grow(const TreeConf& conf)
+	{
+		const float new_length = 
+	}
 };
 
 

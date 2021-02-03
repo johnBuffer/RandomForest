@@ -1,10 +1,9 @@
 #pragma once
-#include "solver.hpp"
 #include <SFML/System.hpp>
 
 struct MouseController
 {
-	Solver& solver;
+	/*Solver& solver;
 
 	MouseController(Solver& solver_)
 		: solver(solver_)
@@ -33,6 +32,6 @@ struct MouseController
 	static Vec2 vec2i_to_vec2f(const sf::Vector2i& v)
 	{
 		return Vec2(static_cast<float>(v.x), static_cast<float>(v.y));
-	}
+	}*/
 
 };
