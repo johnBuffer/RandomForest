@@ -7,6 +7,7 @@
 #include "tree.hpp"
 #include "tree_renderer.hpp"
 #include "mouse_controller.hpp"
+#include "grass/grass.hpp"
 
 
 int main()
@@ -35,8 +36,13 @@ int main()
 		8
 	};
 	
-	Tree tree(Vec2(WinWidth/2, WinHeight), conf);
-	tree.fullGrow();
+
+	std::vector<Tree> trees;
+
+	for (uint32_t i(0); i < 5; ++i) {
+		trees.emplace_back(Vec2(RNGf::getUnder(WinWidth), WinHeight), conf);
+		trees.back().fullGrow();
+	}
 
 	TreeRenderer renderer(window);
 
@@ -48,9 +54,19 @@ int main()
 	sf::Texture texture;
 	texture.loadFromFile("../res/leaf.png");
 
+	Solver solver;
+	sf::VertexArray va(sf::Quads);
+	std::vector<Grass> grass;
+
+	for (uint32_t i(0); i < 8; ++i) {
+		for (float x(WinWidth * 0.0f); x < WinWidth; x += 1.0f) {
+			grass.push_back(Grass::add(solver, x, WinHeight + 0.0f));
+		}
+	}
+
 	std::vector<Wind> wind{
 		Wind(200.0f, 3.f, 500.0f),
-		Wind(500.0f, 2.f, 50.0f),
+		Wind(WinWidth, 1.f, 0.0f, WinWidth),
 		Wind(100.0f, 2.f, 250.0f),
 	};
 
@@ -66,8 +82,8 @@ int main()
 			if (event.type == sf::Event::Closed) {
 				window.close();
 			} else if (event.type == sf::Event::KeyReleased) {
-				tree = Tree(Vec2(WinWidth / 2, WinHeight), conf);
-				tree.fullGrow();
+				/*tree = Tree(Vec2(WinWidth / 2, WinHeight), conf);
+				tree.fullGrow();*/
 			}
 		}
 
@@ -75,18 +91,38 @@ int main()
 			w.update(dt, WinWidth);
 		}
 
-		tree.update(dt, wind);
+		for (Tree& t : trees) {
+			t.update(dt, wind);
+		}
+
+		solver.update();
+
+		va.clear();
+		for (Grass& g : grass) {
+			g.addToVa(va);
+		}
+
+		for (Wind& w : wind) {
+			for (VerletPoint::ptr pt : solver.getPoints()) {
+				if (w.isOver(pt->coords)) {
+					pt->acceleration += Vec2(w.strength, 0.0f);
+				}
+			}
+		}
 
 		window.clear(sf::Color::Black);
 
-		renderer.render(tree);
+		for (const Tree& t : trees) {
+			renderer.render(t);
+		}
 
 		/*for (const Wind& w : wind) {
 			sf::RectangleShape wind_debug(sf::Vector2f(w.width, WinHeight));
-			wind_debug.setPosition(w.pos_x, 0.0f);
+			wind_debug.setPosition(w.pos_x - w.width * 0.5f, 0.0f);
 			wind_debug.setFillColor(sf::Color(255, 0, 0, 100));
 			window.draw(wind_debug);
 		}*/
+		window.draw(va);
 
         window.display();
     }

@@ -8,11 +8,11 @@ struct Wind
 	float pos_x;
 	float speed;
 
-	Wind(float w, float force, float spd)
+	Wind(float w, float force, float spd, float start = 0.0f)
 		: width(w)
 		, strength(force)
 		, speed(spd)
-		, pos_x(-w*0.5f)
+		, pos_x(start-w*0.5f)
 	{
 
 	}

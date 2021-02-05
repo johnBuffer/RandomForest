@@ -50,3 +50,8 @@ Vec2 rotate(const Vec2& v, float angle, const Vec2& origin = Vec2(0.0f, 0.0f))
 
 	return Vec2(new_x, new_y);
 }
+
+float sign(float a)
+{
+	return a < 0.0f ? -1.0f : 1.0f;
+}
