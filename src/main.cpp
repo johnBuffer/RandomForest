@@ -39,7 +39,7 @@ int main()
 
 	std::vector<Tree> trees;
 
-	for (uint32_t i(0); i < 5; ++i) {
+	for (uint32_t i(0); i < 1; ++i) {
 		trees.emplace_back(Vec2(RNGf::getUnder(WinWidth), WinHeight), conf);
 		trees.back().fullGrow();
 	}
@@ -58,7 +58,7 @@ int main()
 	sf::VertexArray va(sf::Quads);
 	std::vector<Grass> grass;
 
-	for (uint32_t i(0); i < 8; ++i) {
+	for (uint32_t i(0); i < 1; ++i) {
 		for (float x(WinWidth * 0.0f); x < WinWidth; x += 1.0f) {
 			grass.push_back(Grass::add(solver, x, WinHeight + 0.0f));
 		}
