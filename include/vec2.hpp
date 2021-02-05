@@ -49,6 +49,11 @@ struct Vec2
 		return x * v.x + y * v.y;
 	}
 
+	void rotate(float angle)
+	{
+		rotate(Vec2(), angle);
+	}
+
 	void rotate(const Vec2& origin, float angle)
 	{
 		const Vec2 v(x - origin.x, y - origin.y);
@@ -63,6 +68,13 @@ struct Vec2
 		const float dot = v1.x * v2.x + v1.y * v2.y;
 		const float det = v1.x * v2.y - v1.y * v2.x;
 		return atan2(det, dot);
+	}
+
+	static Vec2 getRotated(const Vec2& v, float angle)
+	{
+		Vec2 vec = v;
+		vec.rotate(angle);
+		return vec;
 	}
 };
 
