@@ -252,7 +252,7 @@ struct Tree
 			const uint64_t nodes_count = b.nodes.size();
 			const uint64_t leafs_count = 10;
 			for (uint64_t i(0); i < std::min(leafs_count, nodes_count); ++i) {
-				const float angle = RNGf::getRange(PI);
+				const float angle = RNGf::getRange(2.0f * PI);
 				leafs.push_back(Leaf(b.nodes[nodes_count - 1 - i].pos, Vec2(cos(angle), sin(angle))));
 			}
 		}

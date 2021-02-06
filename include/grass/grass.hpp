@@ -17,7 +17,7 @@ struct Grass
 		float strength = 0.04f;
 		float base_length = 10.0f;
 		float link_length = base_length + rand() % (2 * int(base_length));
-		const uint32_t points_count = 2;
+		const uint32_t points_count = 3;
 		VerletPoint::ptr last_point = solver.createPoint(x, y, 1.0f, false);
 		grass.points.push_back(last_point);
 		Link::ptr last_link = nullptr;

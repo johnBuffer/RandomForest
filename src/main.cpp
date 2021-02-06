@@ -37,9 +37,9 @@ int main()
 	};
 	
 
+	const uint32_t trees_count = 3;
 	std::vector<Tree> trees;
-
-	for (uint32_t i(0); i < 1; ++i) {
+	for (uint32_t i(0); i < trees_count; ++i) {
 		trees.emplace_back(Vec2(RNGf::getUnder(WinWidth), WinHeight), conf);
 		trees.back().fullGrow();
 	}
@@ -82,8 +82,11 @@ int main()
 			if (event.type == sf::Event::Closed) {
 				window.close();
 			} else if (event.type == sf::Event::KeyReleased) {
-				/*tree = Tree(Vec2(WinWidth / 2, WinHeight), conf);
-				tree.fullGrow();*/
+				trees.clear();
+				for (uint32_t i(0); i < trees_count; ++i) {
+					trees.emplace_back(Vec2(RNGf::getUnder(WinWidth), WinHeight), conf);
+					trees.back().fullGrow();
+				}
 			}
 		}
 
