@@ -8,8 +8,20 @@
 
 class Solver
 {
+private:
+	std::vector<VerletPoint::ptr> m_points;
+	std::vector<Link::ptr> m_links;
+	std::vector<Join::ptr> m_joins;
+
 public:
 	Solver() = default;
+
+	void clear()
+	{
+		m_links.clear();
+		m_points.clear();
+		m_joins.clear();
+	}
 
 	VerletPoint::ptr createPoint(float x, float y, float mass, bool moving = true)
 	{
@@ -120,10 +132,5 @@ public:
 	{
 		return m_points;
 	}
-
-private:
-	std::vector<VerletPoint::ptr> m_points;
-	std::vector<Link::ptr> m_links;
-	std::vector<Join::ptr> m_joins;
 };
 

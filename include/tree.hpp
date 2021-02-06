@@ -230,7 +230,7 @@ struct Tree
 		addLeafs();
 	}
 
-	void update(float dt, std::vector<Wind>& wind)
+	void update(float dt, const std::vector<Wind>& wind)
 	{
 		for (Leaf& l : leafs) {
 			for (Wind& w : wind) {
