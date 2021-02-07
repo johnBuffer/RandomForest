@@ -3,11 +3,11 @@
 #include "link.hpp"
 
 
-struct Join
+struct Joint
 {
-	using ptr = std::shared_ptr<Join>;
+	using ptr = std::shared_ptr<Joint>;
 
-	Join(Link::ptr link_1_, Link::ptr link_2_, float target_angle_, float strength_)
+	Joint(Link::ptr link_1_, Link::ptr link_2_, float target_angle_, float strength_)
 		: target_angle(target_angle_)
 		, strength(strength_)
 		, last_delta(0.0f)
@@ -57,7 +57,7 @@ struct Join
 		const float d_y = normalized_v2.x * sin_a + normalized_v2.y * cos_a;
 
 		pt_3->moveTo(pt_2->coords + Vec2(d_x, d_y));
-		for (Join::ptr join : sub_joins) {
+		for (Joint::ptr join : sub_joins) {
 			join->rotate(cos_a, sin_a, pt_2->coords);
 		}
 
@@ -65,7 +65,7 @@ struct Join
 		
 	}
 
-	void addSub(Join::ptr join)
+	void addSub(Joint::ptr join)
 	{
 		sub_joins.push_back(join);
 	}
@@ -78,7 +78,7 @@ struct Join
 
 		pt_3->moveTo(origin + Vec2(d_x, d_y));
 
-		for (Join::ptr join : sub_joins) {
+		for (Joint::ptr join : sub_joins) {
 			join->rotate(ca, sa, origin);
 		}
 	}
@@ -86,7 +86,7 @@ struct Join
 	template<typename... Args>
 	static ptr create(Args&&... args)
 	{
-		return std::make_shared<Join>(args...);
+		return std::make_shared<Joint>(args...);
 	}
 
 	float strength;
@@ -96,7 +96,7 @@ struct Join
 	float link_length_1;
 	float link_length_2;
 
-	std::vector<Join::ptr> sub_joins;
+	std::vector<Joint::ptr> sub_joins;
 
 	VerletPoint::ptr pt_1;
 	VerletPoint::ptr pt_2;

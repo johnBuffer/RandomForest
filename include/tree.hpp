@@ -68,7 +68,7 @@ struct Branch
 		const uint32_t index = current_node.index;
 
 		const float width = current_node.width;
-		const float width_threshold = 0.3f;
+		const float width_threshold = 0.8f;
 		if (width > width_threshold) {
 			// Compute new start
 			const Vec2 start = current_node.getEnd();
@@ -85,7 +85,7 @@ struct Branch
 			Node::Ptr new_node = Node::create(start, direction, new_length, new_width, level, index + 1);
 			nodes.push_back(new_node);
 			// Check for split
-			if (index && (index % 3 == 0) && level < conf.max_level) {
+			if (index && (index % 4 == 0) && level < conf.max_level) {
 				result.root = new_node;
 				result.split = true;
 				float split_angle = conf.branch_split_angle + getRandRange(conf.branch_split_var);

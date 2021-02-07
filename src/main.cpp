@@ -24,17 +24,17 @@ int main()
 	window.setFramerateLimit(60);
 
 	TreeConf conf = {
-		40.0f, // branch_width
-		0.9f, // branch_width_ratio
-		0.65f, // split_width_ratio
-		0.5f, // deviation
-		0.7f, // split angle
-		0.3f, // branch_split_var;
-		25.0f, // branch_length;
+		80.0f, // branch_width
+		0.95f, // branch_width_ratio
+		0.5f, // split_width_ratio
+		0.25f, // deviation
+		PI * 0.25f, // split angle
+		0.1f, // branch_split_var;
+		15.0f, // branch_length;
 		0.99f, // branch_length_ratio;
 		0.5f, // branch_split_proba;
 		0.0f, // double split
-		Vec2(0.0f, -0.7f), // Attraction
+		Vec2(0.0f, -0.5f), // Attraction
 		8
 	};
 
@@ -108,6 +108,9 @@ int main()
 				if (event.key.code == sf::Keyboard::Space) {
 					
 				}
+				else if (event.key.code == sf::Keyboard::Escape) {
+					window.close();
+				}
 				else if (event.key.code == sf::Keyboard::W) {
 					base_wind_force = 1.0f;
 				}
@@ -119,12 +122,6 @@ int main()
 					wind[0].strength = current_wind_force;
 				}
 			}
-		}
-
-		if (wait_start) {
-			window.display();
-			wait_start = clock.getElapsedTime().asSeconds() < 3.0f;
-			continue;
 		}
 
 		if (!boosting) {

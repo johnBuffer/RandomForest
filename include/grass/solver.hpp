@@ -2,7 +2,7 @@
 
 #include <SFML/Graphics.hpp>
 #include "grass/link.hpp"
-#include "join.hpp"
+#include "joint.hpp"
 #include <vector>
 
 
@@ -11,7 +11,7 @@ class Solver
 private:
 	std::vector<VerletPoint::ptr> m_points;
 	std::vector<Link::ptr> m_links;
-	std::vector<Join::ptr> m_joins;
+	std::vector<Joint::ptr> m_joins;
 
 public:
 	Solver() = default;
@@ -39,9 +39,9 @@ public:
 	}
 
 	template<typename... Args>
-	Join::ptr createJoin(Args&&... args)
+	Joint::ptr createJoin(Args&&... args)
 	{
-		Join::ptr join = Join::create(args...);
+		Joint::ptr join = Joint::create(args...);
 		m_joins.push_back(join);
 		return join;
 	}
@@ -59,7 +59,7 @@ public:
 
 		const uint32_t iterations_count = 1u;
 		for (uint8_t i(iterations_count); i--;) {
-			for (Join::ptr join : m_joins) {
+			for (Joint::ptr join : m_joins) {
 				join->update(dt);
 			}
 
