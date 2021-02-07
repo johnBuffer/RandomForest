@@ -4,6 +4,22 @@
 #include "wind.hpp"
 
 
+struct LayerRender
+{
+	std::vector<sf::VertexArray> branches;
+	sf::VertexArray leaves;
+	sf::VertexArray grass_va;
+
+	LayerRender()
+		: branches()
+		, leaves(sf::Quads)
+		, grass_va(sf::Quads)
+	{
+
+	}
+};
+
+
 struct Layer
 {
 	// Trees
@@ -11,6 +27,8 @@ struct Layer
 	// Grass
 	Solver solver;
 	std::vector<Grass> grass;
+	// Render
+	LayerRender render_data;
 
 	void init()
 	{
@@ -46,9 +64,20 @@ struct Layer
 		solver.update(dt);
 	}
 
-	void render(sf::RenderTarget& target, const sf::RenderStates& states)
+	void generateGrassRender()
 	{
+		render_data.grass_va.clear();
+		for (Grass& g : grass) {
+			g.addToVa(render_data.grass_va);
+		}
+	}
 
+	void generateRenderArrays()
+	{
+		va.clear();
+		for (Grass& g : grass) {
+			g.addToVa(va);
+		}
 	}
 };
 

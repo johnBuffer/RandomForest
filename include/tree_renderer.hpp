@@ -20,10 +20,12 @@ public:
 		leaf_sprite.setScale(0.02f, 0.02f);
 	}
 
-	void render(const Tree& tree)
+	void render(const Tree& tree, std::vector<sf::VertexArray>& branches_va, sf::VertexArray& leaves_va)
 	{
+		branches_va.clear();
 		for (const Branch& b : tree.branches) {
-			sf::VertexArray va(sf::TriangleStrip, b.nodes.size() * 2);
+			branches_va.emplace_back(sf::TriangleStrip, b.nodes.size() * 2);
+			sf::VertexArray& va = branches_va.back();
 			uint64_t i(0);
 			for (const Node::Ptr n : b.nodes) {
 				const float width = 0.5f * n->width;
@@ -33,20 +35,16 @@ public:
 				va[2 * i + 1].position = sf::Vector2f(n->pos.x - n_vec.x, n->pos.y - n_vec.y);
 				++i;
 			}
-			m_target.draw(va);
 		}
 
 		uint64_t i(0);
 		const float leaf_length = 30.0f;
 		const float leaf_width = 30.0f;
-		sf::VertexArray va(sf::Quads, 4 * tree.leaves.size());
+		leaves_va.resize(4 * tree.leaves.size());
 		for (const Leaf& l : tree.leaves) {
-			if (l.size < 0.0f) {
-				continue;
-			}
 			const Vec2 leaf_dir = l.getDir().getNormalized();
-			const Vec2 dir = leaf_dir * leaf_length * l.size;
-			const Vec2 nrm = leaf_dir.getNormal() * (0.5f * leaf_width * l.size);
+			const Vec2 dir = leaf_dir * leaf_length;
+			const Vec2 nrm = leaf_dir.getNormal() * (0.5f * leaf_width);
 
 			const Vec2 attach = l.getPosition();
 
@@ -55,25 +53,22 @@ public:
 			const Vec2 pt3 = attach - nrm + dir;
 			const Vec2 pt4 = attach - nrm;
 
-			va[4 * i + 0].position = sf::Vector2f(pt1.x, pt1.y);
-			va[4 * i + 1].position = sf::Vector2f(pt2.x, pt2.y);
-			va[4 * i + 2].position = sf::Vector2f(pt3.x, pt3.y);
-			va[4 * i + 3].position = sf::Vector2f(pt4.x, pt4.y);
+			leaves_va[4 * i + 0].position = sf::Vector2f(pt1.x, pt1.y);
+			leaves_va[4 * i + 1].position = sf::Vector2f(pt2.x, pt2.y);
+			leaves_va[4 * i + 2].position = sf::Vector2f(pt3.x, pt3.y);
+			leaves_va[4 * i + 3].position = sf::Vector2f(pt4.x, pt4.y);
 
-			va[4 * i + 0].texCoords = sf::Vector2f(0.0f, 0.0f);
-			va[4 * i + 1].texCoords = sf::Vector2f(1024.0f, 0.0f);
-			va[4 * i + 2].texCoords = sf::Vector2f(1024.0f, 1024.0f);
-			va[4 * i + 3].texCoords = sf::Vector2f(0.0f, 1024.0f);
+			leaves_va[4 * i + 0].texCoords = sf::Vector2f(0.0f, 0.0f);
+			leaves_va[4 * i + 1].texCoords = sf::Vector2f(1024.0f, 0.0f);
+			leaves_va[4 * i + 2].texCoords = sf::Vector2f(1024.0f, 1024.0f);
+			leaves_va[4 * i + 3].texCoords = sf::Vector2f(0.0f, 1024.0f);
 
-			va[4 * i + 0].color = l.color;
-			va[4 * i + 1].color = l.color;
-			va[4 * i + 2].color = l.color;
-			va[4 * i + 3].color = l.color;
+			leaves_va[4 * i + 0].color = l.color;
+			leaves_va[4 * i + 1].color = l.color;
+			leaves_va[4 * i + 2].color = l.color;
+			leaves_va[4 * i + 3].color = l.color;
 
 			++i;
 		}
-		sf::RenderStates states;
-		states.texture = &texture;
-		m_target.draw(va, states);
 	}
 };

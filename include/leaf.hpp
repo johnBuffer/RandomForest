@@ -15,8 +15,6 @@ struct Leaf
 	Vec2 target_direction;
 	Vec2 acceleration;
 	float joint_strenght;
-	bool detached;
-	float size;
 
 	sf::Color color;
 
@@ -26,8 +24,6 @@ struct Leaf
 		, free_particule(root->pos + dir)
 		, target_direction(dir)
 		, joint_strenght(RNGf::getRange(1.0f, 2.0f))
-		, detached(false)
-		, size(-RNGf::getUnder(2.0f))
 	{
 		color = sf::Color(255, 168+RNGf::getRange(80.0f), 0);
 	}
@@ -81,11 +77,9 @@ struct Leaf
 
 	void cut()
 	{
-		detached = true;
 		broken_part = Particule(attach->pos);
 		attach = nullptr;
 		target_direction = Vec2(0.0f, 1.0f);
-		//joint_strenght = 1.0f;
 	}
 
 	void applyWind(const Wind& wind)
