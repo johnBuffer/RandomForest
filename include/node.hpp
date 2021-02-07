@@ -24,6 +24,15 @@ struct Node
 		, index(0)
 	{}
 
+	Node(const Vec2& position)
+		: pos(position)
+		, growth_direction()
+		, length(0.0f)
+		, width(0.0f)
+		, level(0)
+		, index(0)
+	{}
+
 	Node(float x, float y, float a, float l, float w, uint32_t lvl, uint32_t i)
 		: pos(x, y)
 		, growth_direction(cos(a), sin(a))

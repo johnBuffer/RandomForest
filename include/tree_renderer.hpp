@@ -36,19 +36,21 @@ public:
 			m_target.draw(va);
 		}
 
-		/*uint64_t i(0);
-		const float leaf_length = 20.0f;
-		const float leaf_width = 20.0f;
+		uint64_t i(0);
+		const float leaf_length = 30.0f;
+		const float leaf_width = 30.0f;
 		sf::VertexArray va(sf::Quads, 4 * tree.leafs.size());
 		for (const Leaf& l : tree.leafs) {
-			const Vec2 leaf_dir = l.getDir();
-			const Vec2 dir = leaf_dir * leaf_length * l.joint_strenght;
-			const Vec2 nrm = leaf_dir.getNormal() * (0.5f * leaf_width * l.joint_strenght);
+			const Vec2 leaf_dir = l.getDir().getNormalized();
+			const Vec2 dir = leaf_dir * leaf_length;
+			const Vec2 nrm = leaf_dir.getNormal() * (0.5f * leaf_width);
 
-			const Vec2 pt1 = l.attach + nrm;
-			const Vec2 pt2 = l.attach + nrm + dir;
-			const Vec2 pt3 = l.attach - nrm + dir;
-			const Vec2 pt4 = l.attach - nrm;
+			const Vec2 attach = l.getPosition();
+
+			const Vec2 pt1 = attach + nrm;
+			const Vec2 pt2 = attach + nrm + dir;
+			const Vec2 pt3 = attach - nrm + dir;
+			const Vec2 pt4 = attach - nrm;
 
 			va[4 * i + 0].position = sf::Vector2f(pt1.x, pt1.y);
 			va[4 * i + 1].position = sf::Vector2f(pt2.x, pt2.y);
@@ -64,6 +66,6 @@ public:
 		}
 		sf::RenderStates states;
 		states.texture = &texture;
-		m_target.draw(va, states);*/
+		m_target.draw(va, states);
 	}
 };

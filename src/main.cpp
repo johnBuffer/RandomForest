@@ -34,7 +34,7 @@ int main()
 		0.5f, // branch_split_proba;
 		0.0f, // double split
 		Vec2(0.0f, -0.7f), // Attraction
-		2
+		8
 	};
 	
 
@@ -50,16 +50,15 @@ int main()
 
 	const float update_delay = 0.01f;
 
-	const float angle = RNGf::getRange(3.0f);
-	Leaf test_leaf(Vec2(WinWidth / 2, WinHeight / 2), Vec2(cos(angle), sin(angle)));
-
 	sf::Texture texture;
 	texture.loadFromFile("../res/leaf.png");
 
+	const float base_wind_force = 1.0f;
 	std::vector<Wind> wind{
+		Wind(WinWidth, base_wind_force, 0.0f, WinWidth),
 		Wind(200.0f, 3.f, 500.0f),
-		//Wind(WinWidth, 1.f, 0.0f, WinWidth),
 		Wind(100.0f, 2.f, 250.0f),
+		Wind(150.0f, 2.f, 180.0f),
 	};
 
 	const float dt = 0.016f;
@@ -74,10 +73,23 @@ int main()
 			if (event.type == sf::Event::Closed) {
 				window.close();
 			} else if (event.type == sf::Event::KeyReleased) {
-				trees.clear();
-				for (uint32_t i(0); i < trees_count; ++i) {
-					trees.emplace_back(Vec2(WinWidth*0.5f, WinHeight), conf);
-					trees.back().fullGrow();
+				if (event.key.code == sf::Keyboard::Space) {
+					trees.clear();
+					for (uint32_t i(0); i < trees_count; ++i) {
+						trees.emplace_back(Vec2(WinWidth*0.5f, WinHeight), conf);
+						trees.back().fullGrow();
+					}
+				}
+				else {
+					wind[0].strength = base_wind_force;
+				}
+			}
+			else if (event.type == sf::Event::KeyPressed) {
+				if (event.key.code == sf::Keyboard::Space) {
+					
+				}
+				else {
+					wind[0].strength = 30.0f;
 				}
 			}
 		}
@@ -104,15 +116,15 @@ int main()
 
 		for (const Tree& t : trees) {
 			renderer.render(t);
-			debug_renderer.render(t);
+			//debug_renderer.render(t);
 		}
 
-		for (const Wind& w : wind) {
+		/*for (const Wind& w : wind) {
 			sf::RectangleShape wind_debug(sf::Vector2f(w.width, WinHeight));
 			wind_debug.setPosition(w.pos_x - w.width * 0.5f, 0.0f);
 			wind_debug.setFillColor(sf::Color(255, 0, 0, 100));
 			window.draw(wind_debug);
-		}
+		}*/
 
         window.display();
     }

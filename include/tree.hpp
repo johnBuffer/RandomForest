@@ -30,27 +30,34 @@ struct GrowthResult
 {
 	bool split;
 	Node node;
+	Node::Ptr root;
 
 	GrowthResult()
 		: split(false)
 		, node()
+		, root(nullptr)
 	{}
 };
 
 
 struct Branch
 {
+	Node::Ptr root;
+	Vec2 last_root_pos;
 	std::vector<Node::Ptr> nodes;
 
-	Branch()
+	Branch() = default;
+
+	Branch(Node::Ptr root_node, const Node& node)
+		: root(root_node)
+		, last_root_pos(root->pos)
+		, nodes{ Node::create(node) }
 	{}
 
-	Branch(Node node)
-		: nodes{ Node::create(node) }
-	{}
-
-	Branch(const Vec2& pos, float a, float l, float width)
-		: nodes{ Node::create(pos.x, pos.y, a, l, width, 1, 0) }
+	Branch(Node::Ptr node, const Vec2& pos, float a, float l, float width)
+		: root(node)
+		, last_root_pos(root->pos)
+		, nodes{ Node::create(pos.x, pos.y, a, l, width, 1, 0) }
 	{}
 
 	GrowthResult grow(const TreeConf& conf)
@@ -61,7 +68,8 @@ struct Branch
 		const uint32_t length = current_node.index;
 
 		const float width = current_node.width;
-		if (width > 0.3f) {
+		const float width_threshold = 0.3f;
+		if (width > width_threshold) {
 			// Compute new start
 			const Vec2 start = current_node.getEnd();
 			// Compute new length
@@ -74,9 +82,11 @@ struct Branch
 			const float attraction_force = 1.0f / new_length;
 			direction = (direction + conf.attraction * attraction_force).getNormalized();
 			// Add new node
-			nodes.emplace_back(Node::create(start, direction, new_length, new_width, level, length + 1));
+			Node::Ptr new_node = Node::create(start, direction, new_length, new_width, level, length + 1);
+			nodes.push_back(new_node);
 			// Check for split
 			if (length && (length % 3 == 0) && level < conf.max_level) {
+				result.root = new_node;
 				result.split = true;
 				float split_angle = conf.branch_split_angle + getRandRange(conf.branch_split_var);
 				// Determine side
@@ -94,6 +104,15 @@ struct Branch
 
 		return result;
 	}
+
+	void update()
+	{
+		const Vec2 delta_pos = root->pos - last_root_pos;
+		for (Node::Ptr n : nodes) {
+			n->pos += delta_pos;
+		}
+		last_root_pos = root->pos;
+	}
 };
 
 
@@ -101,6 +120,7 @@ struct Tree
 {
 	TreeConf conf;
 
+	Node::Ptr root;
 	std::vector<Branch> branches;
 	std::vector<Leaf> leafs;
 	std::vector<PinnedSegment> segments;
@@ -110,7 +130,8 @@ struct Tree
 		: conf(tree_conf)
 	{
 		float base_angle = -PI * 0.5f;
-		branches.emplace_back(pos, base_angle, conf.branch_length, conf.branch_width);
+		root = Node::create(pos);
+		branches.emplace_back(root, pos, base_angle, conf.branch_length, conf.branch_width);
 	}
 
 	uint64_t getNodesCount() const
@@ -124,16 +145,16 @@ struct Tree
 
 	void grow()
 	{
-		std::vector<Branch> to_add;
+		std::vector<GrowthResult> to_add;
 		for (Branch& b : branches) {
 			GrowthResult res = b.grow(conf);
 			if (res.split) {
-				to_add.emplace_back(res.node);
+				to_add.emplace_back(res);
 			}
 		}
 
-		for (Branch& b : to_add) {
-			branches.push_back(b);
+		for (GrowthResult& res : to_add) {
+			branches.emplace_back(res.root, res.node);
 		}
 	}
 
@@ -156,7 +177,8 @@ struct Tree
 		uint64_t i(0);
 		for (Branch& b : branches) {
 			Vec2 free_point = b.nodes.back()->pos;
-			segments.emplace_back(b.nodes.front(), free_point, i);
+			const float strength = 400.0f * std::pow(0.7f, b.root->level);
+			segments.emplace_back(b.nodes.front(), free_point, i, strength);
 			++i;
 		}
 	}
@@ -178,10 +200,15 @@ struct Tree
 			rotateBranch(branches[p.branch_id], p.attach->pos, p.delta_angle);
 		}
 
+		// Follow root
+		for (Branch& b : branches) {
+			b.update();
+		}
+
 		for (Leaf& l : leafs) {
 			for (const Wind& w : wind) {
-				if (w.isOver(l.position)) {
-					l.acceleration += Vec2(1.0f, RNGf::getRange(1.0f)) * w.strength;
+				if (w.isOver(l.free_particule.position)) {
+					l.applyWind(w);
 				}
 			}
 			
@@ -192,14 +219,11 @@ struct Tree
 	void addLeafs()
 	{
 		for (Branch& b : branches) {
-			/*for (Node& n : b.nodes) {
-
-			}*/
 			const uint64_t nodes_count = b.nodes.size();
 			const uint64_t leafs_count = 10;
 			for (uint64_t i(0); i < std::min(leafs_count, nodes_count); ++i) {
 				const float angle = RNGf::getRange(2.0f * PI);
-				leafs.push_back(Leaf(b.nodes[nodes_count - 1 - i]->pos, Vec2(cos(angle), sin(angle))));
+				leafs.push_back(Leaf(b.nodes[nodes_count - 1 - i], Vec2(cos(angle), sin(angle))));
 			}
 		}
 	}

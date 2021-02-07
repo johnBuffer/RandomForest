@@ -22,9 +22,10 @@ struct Particule
 		, acceleration(0.0f, 0.0f)
 	{}
 
-	void update(float dt)
+	void update(float dt, float air_friction = 0.2f)
 	{
 		const Vec2 velocity = position - old_position;
+		acceleration -= velocity * air_friction;
 		const Vec2 new_pos = position + (velocity + acceleration * dt);
 		old_position = position;
 		position = new_pos;
@@ -47,8 +48,9 @@ struct PinnedSegment
 	uint64_t branch_id;
 	float last_angle;
 	float delta_angle;
+	float strength;
 
-	PinnedSegment(Node::Ptr attach_point, Vec2 free_point, uint64_t branch)
+	PinnedSegment(Node::Ptr attach_point, Vec2 free_point, uint64_t branch, float strength_)
 		: attach(attach_point)
 		, particule(free_point)
 		, target_direction((free_point - attach_point->pos).getNormalized())
@@ -56,6 +58,7 @@ struct PinnedSegment
 		, branch_id(branch)
 		, last_angle((free_point - attach_point->pos).getAngle())
 		, delta_angle(0.0f)
+		, strength(strength_)
 	{}
 
 	void solveAttach()
@@ -67,7 +70,6 @@ struct PinnedSegment
 
 	void update(float dt)
 	{
-		const float strength = 100.0f;
 		particule.acceleration += target_direction * strength;
 		solveAttach();
 		particule.update(dt);
