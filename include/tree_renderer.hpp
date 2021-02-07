@@ -39,8 +39,8 @@ public:
 		uint64_t i(0);
 		const float leaf_length = 30.0f;
 		const float leaf_width = 30.0f;
-		sf::VertexArray va(sf::Quads, 4 * tree.leafs.size());
-		for (const Leaf& l : tree.leafs) {
+		sf::VertexArray va(sf::Quads, 4 * tree.leaves.size());
+		for (const Leaf& l : tree.leaves) {
 			if (l.size < 0.0f) {
 				continue;
 			}
