@@ -9,34 +9,34 @@
 #include "tree_debug_renderer.hpp"
 #include "mouse_controller.hpp"
 #include "grass/grass.hpp"
+#include "gauge_bar.hpp"
 
 
 int main()
 {
-    constexpr uint32_t WinWidth = 1600;
-	constexpr uint32_t WinHeight = 900;
+    constexpr uint32_t WinWidth = 1920;
+	constexpr uint32_t WinHeight = 1080;
 
 	sf::ContextSettings settings;
 	settings.antialiasingLevel = 8;
 
-    sf::RenderWindow window(sf::VideoMode(WinWidth, WinHeight), "Tree", sf::Style::Default, settings);
+    sf::RenderWindow window(sf::VideoMode(WinWidth, WinHeight), "Tree", sf::Style::Fullscreen, settings);
 	window.setFramerateLimit(60);
 
 	TreeConf conf = {
-		30.0f, // branch_width
+		40.0f, // branch_width
 		0.9f, // branch_width_ratio
 		0.65f, // split_width_ratio
 		0.5f, // deviation
 		0.7f, // split angle
 		0.3f, // branch_split_var;
-		20.0f, // branch_length;
+		25.0f, // branch_length;
 		0.99f, // branch_length_ratio;
 		0.5f, // branch_split_proba;
 		0.0f, // double split
 		Vec2(0.0f, -0.7f), // Attraction
 		8
 	};
-	
 
 	const uint32_t trees_count = 1;
 	std::vector<Tree> trees;
@@ -50,8 +50,16 @@ int main()
 
 	sf::Texture texture;
 	texture.loadFromFile("../res/leaf.png");
+	sf::Font font;
+	font.loadFromFile("../res/font_2.ttf");
+	sf::Text text("Wind Force", font, 20);
+	text.setPosition(20.0f, 50.0f);
+	
 
 	float base_wind_force = 0.0f;
+	float max_wind_force = 30.0f;
+	float current_wind_force = 0.0f;
+
 	std::vector<Wind> wind{
 		Wind(WinWidth, base_wind_force, 0.0f, WinWidth),
 		Wind(200.0f, 3.f, 500.0f),
@@ -59,13 +67,17 @@ int main()
 		Wind(150.0f, 2.f, 180.0f),
 	};
 
+	GaugeBar bar(max_wind_force, sf::Vector2f(20.0f, 20.0f), sf::Vector2f(200.0f, 30.0f));
+
 	const float dt = 0.016f;
 
-	const float update_delay = 0.02f;
+	const float update_delay = 0.05f;
 	uint64_t last_nodes_count = 0;
 	bool growing = true;
 	bool leaf = false;
 	bool done = false;
+	bool boosting = false;
+	bool wait_start = true;
 
 	sf::Clock clock;
 	while (window.isOpen())
@@ -88,6 +100,7 @@ int main()
 					}
 				}
 				else {
+					boosting = false;
 					wind[0].strength = base_wind_force;
 				}
 			}
@@ -99,9 +112,23 @@ int main()
 					base_wind_force = 1.0f;
 				}
 				else {
-					wind[0].strength = 30.0f;
+					boosting = true;
+					if (current_wind_force < max_wind_force) {
+						current_wind_force += 0.1f;
+					}
+					wind[0].strength = current_wind_force;
 				}
 			}
+		}
+
+		if (wait_start) {
+			window.display();
+			wait_start = clock.getElapsedTime().asSeconds() < 3.0f;
+			continue;
+		}
+
+		if (!boosting) {
+			current_wind_force += (base_wind_force - current_wind_force) * 0.1f;
 		}
 
 		Tree& current_tree = trees[0];
@@ -134,6 +161,8 @@ int main()
 			}
 		}
 
+		bar.setValue(current_wind_force);
+
 		if (done) {
 			for (Wind& w : wind) {
 				w.update(dt, WinWidth);
@@ -143,7 +172,7 @@ int main()
 				for (Tree& t : trees) {
 					for (PinnedSegment& p : t.segments) {
 						if (w.isOver(p.particule.position)) {
-							p.particule.acceleration += Vec2(1.0f, RNGf::getRange(1.0f)) * w.strength;
+							p.particule.acceleration += Vec2(1.0f, RNGf::getRange(2.0f)) * w.strength;
 						}
 					}
 				}
@@ -167,6 +196,10 @@ int main()
 			wind_debug.setFillColor(sf::Color(255, 0, 0, 100));
 			window.draw(wind_debug);
 		}*/
+
+		sf::RenderStates states;
+		bar.render(window, states);
+		window.draw(text);
 
         window.display();
     }

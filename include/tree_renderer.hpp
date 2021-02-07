@@ -65,6 +65,11 @@ public:
 			va[4 * i + 2].texCoords = sf::Vector2f(1024.0f, 1024.0f);
 			va[4 * i + 3].texCoords = sf::Vector2f(0.0f, 1024.0f);
 
+			va[4 * i + 0].color = l.color;
+			va[4 * i + 1].color = l.color;
+			va[4 * i + 2].color = l.color;
+			va[4 * i + 3].color = l.color;
+
 			++i;
 		}
 		sf::RenderStates states;

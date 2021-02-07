@@ -18,6 +18,8 @@ struct Leaf
 	bool detached;
 	float size;
 
+	sf::Color color;
+
 	Leaf(Node::Ptr root, const Vec2& dir)
 		: attach(root)
 		, last_attach_pos(root->pos)
@@ -26,7 +28,9 @@ struct Leaf
 		, joint_strenght(RNGf::getRange(1.0f, 2.0f))
 		, detached(false)
 		, size(-RNGf::getUnder(2.0f))
-	{}
+	{
+		color = sf::Color(255, 168+RNGf::getRange(80.0f), 0);
+	}
 
 	void solveAttach()
 	{
