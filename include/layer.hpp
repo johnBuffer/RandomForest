@@ -45,5 +45,10 @@ struct Layer
 	{
 		solver.update(dt);
 	}
+
+	void render(sf::RenderTarget& target, const sf::RenderStates& states)
+	{
+
+	}
 };
 

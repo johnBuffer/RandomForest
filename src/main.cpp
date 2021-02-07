@@ -42,7 +42,7 @@ int main()
 	std::vector<Tree> trees;
 	for (uint32_t i(0); i < trees_count; ++i) {
 		trees.emplace_back(Vec2(WinWidth*0.5f, WinHeight), conf);
-		//trees.back().fullGrow();
+		trees.back().fullGrow();
 	}
 
 	TreeRenderer renderer(window);
@@ -73,11 +73,7 @@ int main()
 
 	const float update_delay = 0.05f;
 	uint64_t last_nodes_count = 0;
-	bool growing = true;
-	bool leaf = false;
-	bool done = false;
 	bool boosting = false;
-	bool wait_start = true;
 
 	sf::Clock clock;
 	while (window.isOpen())
@@ -93,10 +89,7 @@ int main()
 					trees.clear();
 					for (uint32_t i(0); i < trees_count; ++i) {
 						trees.emplace_back(Vec2(WinWidth*0.5f, WinHeight), conf);
-						growing = true;
-						leaf = false;
-						done = false;
-						//trees.back().fullGrow();
+						trees.back().fullGrow();
 					}
 				}
 				else {
@@ -128,56 +121,24 @@ int main()
 			current_wind_force += (base_wind_force - current_wind_force) * 0.1f;
 		}
 
-		Tree& current_tree = trees[0];
-		if (growing) {
-			if (clock.getElapsedTime().asSeconds() > update_delay) {
-				clock.restart();
-				current_tree.grow();
-				const uint64_t current_count = current_tree.getNodesCount();
-				if ((current_count == last_nodes_count) && last_nodes_count) {
-					growing = false;
-				}
-				last_nodes_count = current_count;
-			}
-		}
-		else if (!leaf) {
-			current_tree.createSkeleton();
-			current_tree.addLeafs();
-			leaf = true;
-		}
-		else {
-			bool all_grown = true;
-			for (Leaf& l : current_tree.leafs) {
-				if (l.size < 1.0f) {
-					all_grown = false;
-					l.size += 0.03f;
-				}
-			}
-			if (all_grown) {
-				done = true;
-			}
-		}
-
 		bar.setValue(current_wind_force);
 
-		if (done) {
-			for (Wind& w : wind) {
-				w.update(dt, WinWidth);
-			}
+		for (Wind& w : wind) {
+			w.update(dt, WinWidth);
+		}
 
-			for (Wind& w : wind) {
-				for (Tree& t : trees) {
-					for (PinnedSegment& p : t.segments) {
-						if (w.isOver(p.particule.position)) {
-							p.particule.acceleration += Vec2(1.0f, RNGf::getRange(2.0f)) * w.strength;
-						}
+		for (Wind& w : wind) {
+			for (Tree& t : trees) {
+				for (PinnedSegment& p : t.segments) {
+					if (w.isOver(p.particule.position)) {
+						p.particule.acceleration += Vec2(1.0f, RNGf::getRange(2.0f)) * w.strength;
 					}
 				}
 			}
+		}
 
-			for (Tree& t : trees) {
-				t.update(dt, wind);
-			}
+		for (Tree& t : trees) {
+			t.update(dt, wind);
 		}
 
 		window.clear(sf::Color::Black);
