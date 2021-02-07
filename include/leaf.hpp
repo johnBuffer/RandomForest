@@ -16,6 +16,7 @@ struct Leaf
 	Vec2 acceleration;
 	float joint_strenght;
 	bool detached;
+	float size;
 
 	Leaf(Node::Ptr root, const Vec2& dir)
 		: attach(root)
@@ -24,6 +25,7 @@ struct Leaf
 		, target_direction(dir)
 		, joint_strenght(RNGf::getRange(1.0f, 2.0f))
 		, detached(false)
+		, size(-RNGf::getUnder(2.0f))
 	{}
 
 	void solveAttach()
@@ -84,9 +86,11 @@ struct Leaf
 
 	void applyWind(const Wind& wind)
 	{
-		free_particule.acceleration += Vec2(1.0f, RNGf::getRange(2.0f)) * wind.strength;
+		const float ratio = (1.0f - std::abs(wind.pos_x - free_particule.position.x) / (0.5f * wind.width));
+		const float wind_force = wind.strength * (wind.speed ? ratio : 1.0f);
+		free_particule.acceleration += Vec2(1.0f, RNGf::getRange(2.0f)) * wind_force;
 		if (!attach) {
-			broken_part.acceleration += Vec2(1.0f, RNGf::getRange(2.0f)) * wind.strength;
+			broken_part.acceleration += Vec2(1.0f, RNGf::getRange(2.0f)) * wind_force;
 		}
 	}
 

@@ -65,7 +65,7 @@ struct Branch
 		GrowthResult result;
 		Node& current_node = *(nodes.back());
 		const uint32_t level = current_node.level;
-		const uint32_t length = current_node.index;
+		const uint32_t index = current_node.index;
 
 		const float width = current_node.width;
 		const float width_threshold = 0.3f;
@@ -82,10 +82,10 @@ struct Branch
 			const float attraction_force = 1.0f / new_length;
 			direction = (direction + conf.attraction * attraction_force).getNormalized();
 			// Add new node
-			Node::Ptr new_node = Node::create(start, direction, new_length, new_width, level, length + 1);
+			Node::Ptr new_node = Node::create(start, direction, new_length, new_width, level, index + 1);
 			nodes.push_back(new_node);
 			// Check for split
-			if (length && (length % 3 == 0) && level < conf.max_level) {
+			if (index && (index % 3 == 0) && level < conf.max_level) {
 				result.root = new_node;
 				result.split = true;
 				float split_angle = conf.branch_split_angle + getRandRange(conf.branch_split_var);
@@ -99,6 +99,10 @@ struct Branch
 				result.node.width = new_width * conf.split_width_ratio;
 				result.node.level = level + 1;
 				result.node.index = 0;
+				// Avoid single node branches
+				if (result.node.width < width_threshold) {
+					result.split = false;
+				}
 			}
 		}
 
@@ -177,7 +181,7 @@ struct Tree
 		uint64_t i(0);
 		for (Branch& b : branches) {
 			Vec2 free_point = b.nodes.back()->pos;
-			const float strength = 400.0f * std::pow(0.7f, b.root->level);
+			const float strength = 300.0f * std::pow(0.8f, b.root->level);
 			segments.emplace_back(b.nodes.front(), free_point, i, strength);
 			++i;
 		}

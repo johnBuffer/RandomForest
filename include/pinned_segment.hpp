@@ -22,7 +22,7 @@ struct Particule
 		, acceleration(0.0f, 0.0f)
 	{}
 
-	void update(float dt, float air_friction = 0.2f)
+	void update(float dt, float air_friction = 0.5f)
 	{
 		const Vec2 velocity = position - old_position;
 		acceleration -= velocity * air_friction;
