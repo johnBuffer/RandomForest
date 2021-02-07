@@ -63,6 +63,12 @@ struct Vec2
 		y = (sa * v.x + ca * v.y) + origin.y;
 	}
 
+	float getAngle() const
+	{
+		const float angle = acos(x / getLength());
+		return y < 0.0f ? -angle : angle;
+	}
+
 	static float getAngle(const Vec2& v1, const Vec2& v2)
 	{
 		const float dot = v1.x * v2.x + v1.y * v2.y;

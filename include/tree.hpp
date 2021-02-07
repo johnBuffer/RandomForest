@@ -4,6 +4,9 @@
 #include "utils.hpp"
 #include "number_generator.hpp"
 #include "wind.hpp"
+#include "leaf.hpp"
+#include "node.hpp"
+#include "pinned_segment.hpp"
 
 
 struct TreeConf
@@ -20,49 +23,6 @@ struct TreeConf
 	float double_split_proba;
 	Vec2 attraction;
 	uint32_t max_level;
-};
-
-
-struct Node
-{
-	Vec2 pos;
-	Vec2 growth_direction;
-	float length;
-	float width;
-	uint32_t level;
-	uint32_t index;
-
-	Node()
-		: pos()
-		, growth_direction()
-		, length(0.0f)
-		, width(0.0f)
-		, level(1)
-		, index(0)
-	{}
-
-	Node(float x, float y, float a, float l, float w, uint32_t lvl, uint32_t i)
-		: pos(x, y)
-		, growth_direction(cos(a), sin(a))
-		, length(l)
-		, width(w)
-		, level(lvl)
-		, index(i)
-	{}
-
-	Node(const Vec2& position, const Vec2& direction, float l, float w, uint32_t lvl, uint32_t i)
-		: pos(position)
-		, growth_direction(direction)
-		, length(l)
-		, width(w)
-		, level(lvl)
-		, index(i)
-	{}
-
-	Vec2 getEnd() const
-	{
-		return pos + (growth_direction * length);
-	}
 };
 
 
@@ -137,54 +97,14 @@ struct Branch
 };
 
 
-struct Leaf
-{
-	Vec2 attach;
-	Vec2 position;
-	Vec2 old_position;
-	Vec2 target_direction;
-	Vec2 acceleration;
-	float joint_strenght;
-
-	Leaf(const Vec2& pos, const Vec2& dir)
-		: attach(pos)
-		, position(pos + dir)
-		, old_position(position)
-		, target_direction(dir)
-		, joint_strenght(RNGf::getRange(1.0f, 2.0f))
-	{}
-
-	void solveAttach()
-	{
-		const float length = 1.0f;
-		const Vec2 delta = position - attach;
-		const float dist_delta = 1.0f - delta.getLength();
-		position = position + delta.getNormalized() * dist_delta;
-	}
-
-	Vec2 getDir() const
-	{
-		return position - attach;
-	}
-
-	void update(float dt)
-	{
-		solveAttach();
-		const Vec2 velocity = position - old_position;
-		const Vec2 new_pos = position + (velocity + acceleration * dt);
-		old_position = position;
-		position = new_pos;
-		acceleration = target_direction * joint_strenght;
-	}
-};
-
-
 struct Tree
 {
 	TreeConf conf;
 
 	std::vector<Branch> branches;
 	std::vector<Leaf> leafs;
+	std::vector<PinnedSegment> segments;
+
 
 	Tree(const Vec2& pos, const TreeConf& tree_conf)
 		: conf(tree_conf)
@@ -227,13 +147,40 @@ struct Tree
 			}
 			nodes_count = getNodesCount();
 		}
+		createSkeleton();
 		addLeafs();
+	}
+
+	void createSkeleton()
+	{
+		uint64_t i(0);
+		for (Branch& b : branches) {
+			Index<Node> attach(b.nodes, 0);
+			Vec2 free_point = b.nodes.back().pos;
+			segments.emplace_back(attach, free_point, i);
+			++i;
+		}
+	}
+
+	void rotateBranch(Branch& branch, Vec2 attach, float angle)
+	{
+		for (Node& n : branch.nodes) {
+			n.pos.rotate(attach, angle);
+		}
 	}
 
 	void update(float dt, const std::vector<Wind>& wind)
 	{
+		for (PinnedSegment& p : segments) {
+			p.update(dt);
+		}
+
+		for (PinnedSegment& p : segments) {
+			rotateBranch(branches[p.branch_id], p.attach->pos, p.delta_angle);
+		}
+
 		for (Leaf& l : leafs) {
-			for (Wind& w : wind) {
+			for (const Wind& w : wind) {
 				if (w.isOver(l.position)) {
 					l.acceleration += Vec2(1.0f, RNGf::getRange(1.0f)) * w.strength;
 				}

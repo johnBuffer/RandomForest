@@ -36,7 +36,7 @@ public:
 			m_target.draw(va);
 		}
 
-		uint64_t i(0);
+		/*uint64_t i(0);
 		const float leaf_length = 20.0f;
 		const float leaf_width = 20.0f;
 		sf::VertexArray va(sf::Quads, 4 * tree.leafs.size());
@@ -64,6 +64,6 @@ public:
 		}
 		sf::RenderStates states;
 		states.texture = &texture;
-		m_target.draw(va, states);
+		m_target.draw(va, states);*/
 	}
 };

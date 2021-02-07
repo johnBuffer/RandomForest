@@ -6,6 +6,7 @@
 
 #include "tree.hpp"
 #include "tree_renderer.hpp"
+#include "tree_debug_renderer.hpp"
 #include "mouse_controller.hpp"
 #include "grass/grass.hpp"
 
@@ -33,18 +34,19 @@ int main()
 		0.5f, // branch_split_proba;
 		0.0f, // double split
 		Vec2(0.0f, -0.7f), // Attraction
-		8
+		2
 	};
 	
 
-	const uint32_t trees_count = 3;
+	const uint32_t trees_count = 1;
 	std::vector<Tree> trees;
 	for (uint32_t i(0); i < trees_count; ++i) {
-		trees.emplace_back(Vec2(RNGf::getUnder(WinWidth), WinHeight), conf);
+		trees.emplace_back(Vec2(WinWidth*0.5f, WinHeight), conf);
 		trees.back().fullGrow();
 	}
 
 	TreeRenderer renderer(window);
+	TreeDebugRenderer debug_renderer(window);
 
 	const float update_delay = 0.01f;
 
@@ -54,19 +56,9 @@ int main()
 	sf::Texture texture;
 	texture.loadFromFile("../res/leaf.png");
 
-	Solver solver;
-	sf::VertexArray va(sf::Quads);
-	std::vector<Grass> grass;
-
-	/*for (uint32_t i(0); i < 1; ++i) {
-		for (float x(WinWidth * 0.0f); x < WinWidth; x += 1.0f) {
-			grass.push_back(Grass::add(solver, x, WinHeight + 0.0f));
-		}
-	}*/
-
 	std::vector<Wind> wind{
 		Wind(200.0f, 3.f, 500.0f),
-		Wind(WinWidth, 1.f, 0.0f, WinWidth),
+		//Wind(WinWidth, 1.f, 0.0f, WinWidth),
 		Wind(100.0f, 2.f, 250.0f),
 	};
 
@@ -84,7 +76,7 @@ int main()
 			} else if (event.type == sf::Event::KeyReleased) {
 				trees.clear();
 				for (uint32_t i(0); i < trees_count; ++i) {
-					trees.emplace_back(Vec2(RNGf::getUnder(WinWidth), WinHeight), conf);
+					trees.emplace_back(Vec2(WinWidth*0.5f, WinHeight), conf);
 					trees.back().fullGrow();
 				}
 			}
@@ -94,38 +86,33 @@ int main()
 			w.update(dt, WinWidth);
 		}
 
-		for (Tree& t : trees) {
-			t.update(dt, wind);
-		}
-
-		solver.update();
-
-		va.clear();
-		for (Grass& g : grass) {
-			g.addToVa(va);
-		}
-
 		for (Wind& w : wind) {
-			for (VerletPoint::ptr pt : solver.getPoints()) {
-				if (w.isOver(pt->coords)) {
-					pt->acceleration += Vec2(w.strength, 0.0f);
+			for (Tree& t : trees) {
+				for (PinnedSegment& p : t.segments) {
+					if (w.isOver(p.particule.position)) {
+						p.particule.acceleration += Vec2(1.0f, RNGf::getRange(1.0f)) * w.strength;
+					}
 				}
 			}
+		}
+
+		for (Tree& t : trees) {
+			t.update(dt, wind);
 		}
 
 		window.clear(sf::Color::Black);
 
 		for (const Tree& t : trees) {
 			renderer.render(t);
+			debug_renderer.render(t);
 		}
 
-		/*for (const Wind& w : wind) {
+		for (const Wind& w : wind) {
 			sf::RectangleShape wind_debug(sf::Vector2f(w.width, WinHeight));
 			wind_debug.setPosition(w.pos_x - w.width * 0.5f, 0.0f);
 			wind_debug.setFillColor(sf::Color(255, 0, 0, 100));
 			window.draw(wind_debug);
-		}*/
-		window.draw(va);
+		}
 
         window.display();
     }

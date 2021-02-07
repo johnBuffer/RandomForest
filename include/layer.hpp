@@ -29,7 +29,6 @@ struct Layer
 				}
 			}
 		}
-
 		// Update entities
 		updateGrass(dt);
 		updateTrees(dt, wind);
