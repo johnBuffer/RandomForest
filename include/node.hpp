@@ -1,10 +1,13 @@
 #pragma once
 #include <cstdint>
 #include "vec2.hpp"
+#include <memory>
 
 
 struct Node
 {
+	using Ptr = std::shared_ptr<Node>;
+
 	Vec2 pos;
 	Vec2 growth_direction;
 	float length;
@@ -42,5 +45,11 @@ struct Node
 	Vec2 getEnd() const
 	{
 		return pos + (growth_direction * length);
+	}
+
+	template<typename... Args>
+	static Ptr create(Args&& ...args)
+	{
+		return std::make_shared<Node>(args...);
 	}
 };

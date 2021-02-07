@@ -40,7 +40,7 @@ struct Particule
 
 struct PinnedSegment
 {
-	Index<Node> attach;
+	Node::Ptr attach;
 	Particule particule;
 	Vec2 target_direction;
 	float length;
@@ -48,7 +48,7 @@ struct PinnedSegment
 	float last_angle;
 	float delta_angle;
 
-	PinnedSegment(Index<Node> attach_point, Vec2 free_point, uint64_t branch)
+	PinnedSegment(Node::Ptr attach_point, Vec2 free_point, uint64_t branch)
 		: attach(attach_point)
 		, particule(free_point)
 		, target_direction((free_point - attach_point->pos).getNormalized())

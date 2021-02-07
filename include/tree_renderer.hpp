@@ -25,12 +25,12 @@ public:
 		for (const Branch& b : tree.branches) {
 			sf::VertexArray va(sf::TriangleStrip, b.nodes.size() * 2);
 			uint64_t i(0);
-			for (const Node& n : b.nodes) {
-				const float width = 0.5f * n.width;
-				const Vec2 n_vec = n.growth_direction.getNormal() * width;
+			for (const Node::Ptr n : b.nodes) {
+				const float width = 0.5f * n->width;
+				const Vec2 n_vec = n->growth_direction.getNormal() * width;
 
-				va[2 * i].position = sf::Vector2f(n.pos.x + n_vec.x, n.pos.y + n_vec.y);
-				va[2 * i + 1].position = sf::Vector2f(n.pos.x - n_vec.x, n.pos.y - n_vec.y);
+				va[2 * i].position = sf::Vector2f(n->pos.x + n_vec.x, n->pos.y + n_vec.y);
+				va[2 * i + 1].position = sf::Vector2f(n->pos.x - n_vec.x, n->pos.y - n_vec.y);
 				++i;
 			}
 			m_target.draw(va);

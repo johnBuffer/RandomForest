@@ -40,23 +40,23 @@ struct GrowthResult
 
 struct Branch
 {
-	std::vector<Node> nodes;
+	std::vector<Node::Ptr> nodes;
 
 	Branch()
 	{}
 
 	Branch(Node node)
-		: nodes{ node }
+		: nodes{ Node::create(node) }
 	{}
 
 	Branch(const Vec2& pos, float a, float l, float width)
-		: nodes{ Node(pos.x, pos.y, a, l, width, 1, 0) }
+		: nodes{ Node::create(pos.x, pos.y, a, l, width, 1, 0) }
 	{}
 
 	GrowthResult grow(const TreeConf& conf)
 	{
 		GrowthResult result;
-		const Node& current_node = nodes.back();
+		Node& current_node = *(nodes.back());
 		const uint32_t level = current_node.level;
 		const uint32_t length = current_node.index;
 
@@ -74,7 +74,7 @@ struct Branch
 			const float attraction_force = 1.0f / new_length;
 			direction = (direction + conf.attraction * attraction_force).getNormalized();
 			// Add new node
-			nodes.emplace_back(start, direction, new_length, new_width, level, length + 1);
+			nodes.emplace_back(Node::create(start, direction, new_length, new_width, level, length + 1));
 			// Check for split
 			if (length && (length % 3 == 0) && level < conf.max_level) {
 				result.split = true;
@@ -155,17 +155,16 @@ struct Tree
 	{
 		uint64_t i(0);
 		for (Branch& b : branches) {
-			Index<Node> attach(b.nodes, 0);
-			Vec2 free_point = b.nodes.back().pos;
-			segments.emplace_back(attach, free_point, i);
+			Vec2 free_point = b.nodes.back()->pos;
+			segments.emplace_back(b.nodes.front(), free_point, i);
 			++i;
 		}
 	}
 
 	void rotateBranch(Branch& branch, Vec2 attach, float angle)
 	{
-		for (Node& n : branch.nodes) {
-			n.pos.rotate(attach, angle);
+		for (Node::Ptr n : branch.nodes) {
+			n->pos.rotate(attach, angle);
 		}
 	}
 
@@ -200,7 +199,7 @@ struct Tree
 			const uint64_t leafs_count = 10;
 			for (uint64_t i(0); i < std::min(leafs_count, nodes_count); ++i) {
 				const float angle = RNGf::getRange(2.0f * PI);
-				leafs.push_back(Leaf(b.nodes[nodes_count - 1 - i].pos, Vec2(cos(angle), sin(angle))));
+				leafs.push_back(Leaf(b.nodes[nodes_count - 1 - i]->pos, Vec2(cos(angle), sin(angle))));
 			}
 		}
 	}
