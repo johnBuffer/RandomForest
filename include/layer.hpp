@@ -44,17 +44,24 @@ struct Layer
 		solver.clear();
 
 		const float trees_zone = config.width - config.gap;
-		for (uint32_t i(config.trees_count); i--;) {
+		const uint32_t trees_count = RNGf::getUnder(config.trees_count);
+		for (uint32_t i(trees_count); i--;) {
 			Vec2 tree_pos(RNGf::getUnder(trees_zone), config.height);
 			if (tree_pos.x > trees_zone * 0.5f) {
 				tree_pos.x += config.gap;
 			}
-			trees.push_back(Tree(tree_pos, config.tree_conf));
+
+			TreeConf conf = config.tree_conf;
+			const float size_var = RNGf::getRange(-20.0f, 20.0f);
+			conf.branch_length += size_var;
+			conf.branch_width += 2.0f * size_var;
+
+			trees.push_back(Tree(tree_pos, conf));
 			trees.back().fullGrow();
 		}
 
 		for (float x(0.0f); x < config.width; x += 1.0f) {
-			grass.push_back(Grass::add(solver, x, config.height, RNGf::getRange(4.0f, 12.0f)));
+			grass.push_back(Grass::add(solver, x, config.height, RNGf::getRange(4.0f, 18.0f)));
 		}
 
 		render_data.init(trees, grass);
@@ -66,7 +73,7 @@ struct Layer
 		for (const Wind& w : wind) {
 			for (VerletPoint::ptr pt : solver.getPoints()) {
 				if (w.isOver(pt->coords)) {
-					pt->acceleration += Vec2(w.strength, 0.0f);
+					pt->acceleration += Vec2(w.strength * 5.0f, 0.0f);
 				}
 			}
 		}
@@ -86,15 +93,6 @@ struct Layer
 	void updateGrass(float dt)
 	{
 		solver.update(dt);
-	}
-
-	void generateGrassRenderData()
-	{
-	}
-
-	void generateTreesRenderData()
-	{
-		
 	}
 
 	void generateRenderArrays()

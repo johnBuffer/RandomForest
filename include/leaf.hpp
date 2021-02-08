@@ -26,7 +26,7 @@ struct Leaf
 		, free_particule(root->pos + dir)
 		, target_direction(dir)
 		, joint_strenght(RNGf::getRange(1.0f, 2.0f))
-		, cut_threshold(0.3f + RNGf::getUnder(0.8f))
+		, cut_threshold(0.4f + RNGf::getUnder(1.0f))
 		, size(1.0f)
 	{
 		color = sf::Color::Black;// sf::Color(255, static_cast<uint8_t>(168 + RNGf::getRange(80.0f)), 0);

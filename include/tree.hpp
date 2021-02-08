@@ -182,7 +182,7 @@ struct Tree
 		uint64_t i(0);
 		for (Branch& b : branches) {
 			Vec2 free_point = b.nodes.back()->pos;
-			const float strength = 300.0f * static_cast<float>(std::pow(0.2f, b.root->level));
+			const float strength = 1000.0f * static_cast<float>(std::pow(0.2f, b.root->level));
 			segments.emplace_back(b.nodes.front(), free_point, i, strength);
 			++i;
 		}

@@ -43,8 +43,8 @@ int main()
 	};
 
 	LayerConf layer_conf{
-		3,
-		2000.0f,
+		5,
+		2500.0f,
 		1080.0f,
 		1200.0f,
 		tree_conf
@@ -61,17 +61,17 @@ int main()
 
 	LayerRenderer renderer(window);
 
-	float base_wind_force = 3.0f;
+	float base_wind_force = 0.5f;
 	float max_wind_force = 30.0f;
 	float current_wind_force = 0.0f;
 
-	const float wind_force = 0.5f;
+	const float wind_force = 0.1f;
 	std::vector<Wind> wind{
 		Wind(2.0f * layer_conf.width, base_wind_force * wind_force, 0.0f, layer_conf.width),
-		Wind(300.0f, 3.f * wind_force, 500.0f),
-		Wind(200.0f, 2.f * wind_force, 250.0f),
+		Wind(1000.0f, 3.f * wind_force, 1500.0f),
+		Wind(300.0f, 2.f * wind_force, 250.0f),
 		Wind(850.0f, 3.f * wind_force, 1080.0f),
-		Wind(250.0f, 8.f * wind_force, 400.0f),
+		Wind(500.0f, 8.f * wind_force, 400.0f),
 	};
 
 	const float dt = 0.016f;
@@ -91,7 +91,9 @@ int main()
 				window.close();
 			} else if (event.type == sf::Event::KeyReleased) {
 				if (event.key.code == sf::Keyboard::Space) {
-					
+					for (Wind& w : wind) {
+						w.strength *= 200.0f;
+					}
 				}
 				else {
 					boosting = false;
@@ -104,6 +106,16 @@ int main()
 				}
 				else if (event.key.code == sf::Keyboard::Escape) {
 					window.close();
+				}
+				else if (event.key.code == sf::Keyboard::Up) {
+					for (Wind& w : wind) {
+						w.strength *= 1.2f;
+					}
+				}
+				else if (event.key.code == sf::Keyboard::Down) {
+					for (Wind& w : wind) {
+						w.strength /= 1.2f;
+					}
 				}
 				else if (event.key.code == sf::Keyboard::W) {
 					base_wind_force = 1.0f;
@@ -156,7 +168,7 @@ int main()
 		window.clear(sf::Color::Black);
 
 		const sf::Vector2f mid_window(float(WinWidth) * 0.5f, float(WinHeight) * 0.65f);
-		const sf::Vector2f mid_layer(layer_conf.width * 0.5f, layer_conf.height * 0.92f);
+		const sf::Vector2f mid_layer(layer_conf.width * 0.5f, layer_conf.height * 0.9f);
 		const float max_depth = layers_count * layer_space;
 		uint64_t layer_i(layers.size() - 1);
 		
