@@ -18,6 +18,7 @@ struct Leaf
 
 	sf::Color color;
 	float cut_threshold;
+	float size;
 
 	Leaf(Node::Ptr root, const Vec2& dir)
 		: attach(root)
@@ -26,8 +27,9 @@ struct Leaf
 		, target_direction(dir)
 		, joint_strenght(RNGf::getRange(1.0f, 2.0f))
 		, cut_threshold(0.3f + RNGf::getUnder(0.8f))
+		, size(1.0f)
 	{
-		color = sf::Color(255, static_cast<uint8_t>(168+RNGf::getRange(80.0f)), 0);
+		color = sf::Color::Black;// sf::Color(255, static_cast<uint8_t>(168 + RNGf::getRange(80.0f)), 0);
 	}
 
 	void solveAttach()

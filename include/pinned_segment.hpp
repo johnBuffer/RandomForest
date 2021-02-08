@@ -24,12 +24,14 @@ struct Particule
 
 	void update(float dt, float air_friction = 0.5f)
 	{
-		const Vec2 velocity = position - old_position;
-		acceleration -= velocity * air_friction;
-		const Vec2 new_pos = position + (velocity + acceleration * dt);
-		old_position = position;
-		position = new_pos;
-		acceleration = Vec2(0.0f, 0.0f);
+		if (position.y < 1080.0f) {
+			const Vec2 velocity = position - old_position;
+			acceleration -= velocity * air_friction;
+			const Vec2 new_pos = position + (velocity + acceleration * dt);
+			old_position = position;
+			position = new_pos;
+			acceleration = Vec2(0.0f, 0.0f);
+		}
 	}
 
 	void move(Vec2 v)

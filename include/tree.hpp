@@ -102,6 +102,7 @@ struct Branch
 				// Avoid single node branches
 				if (result.node.width < width_threshold) {
 					result.split = false;
+					new_node->width = 0.0f;
 				}
 			}
 		}
@@ -181,7 +182,7 @@ struct Tree
 		uint64_t i(0);
 		for (Branch& b : branches) {
 			Vec2 free_point = b.nodes.back()->pos;
-			const float strength = 300.0f * static_cast<float>(std::pow(0.7f, b.root->level));
+			const float strength = 300.0f * static_cast<float>(std::pow(0.2f, b.root->level));
 			segments.emplace_back(b.nodes.front(), free_point, i, strength);
 			++i;
 		}
@@ -239,6 +240,7 @@ struct Tree
 			for (uint64_t i(0); i < std::min(leafs_count, nodes_count); ++i) {
 				const float angle = RNGf::getRange(2.0f * PI);
 				leaves.push_back(Leaf(b.nodes[nodes_count - 1 - i], Vec2(cos(angle), sin(angle))));
+				leaves.back().size = 1.0f + (2.0f * i / float(leafs_count));
 			}
 		}
 	}

@@ -13,7 +13,7 @@ struct Grass
 	{
 		Grass grass;
 
-		float strength = 0.04f;
+		float strength = 0.08f;
 		float base_length = height;
 		float link_length = base_length + rand() % (2 * int(base_length));
 		const uint32_t points_count = 3;

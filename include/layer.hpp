@@ -54,7 +54,7 @@ struct Layer
 		}
 
 		for (float x(0.0f); x < config.width; x += 1.0f) {
-			grass.push_back(Grass::add(solver, x, config.height, RNGf::getRange(10.0f, 30.0f)));
+			grass.push_back(Grass::add(solver, x, config.height, RNGf::getRange(4.0f, 12.0f)));
 		}
 
 		render_data.init(trees, grass);
