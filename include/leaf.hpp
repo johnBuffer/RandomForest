@@ -25,7 +25,7 @@ struct Leaf
 		, target_direction(dir)
 		, joint_strenght(RNGf::getRange(1.0f, 2.0f))
 	{
-		color = sf::Color(255, 168+RNGf::getRange(80.0f), 0);
+		color = sf::Color(255, static_cast<uint8_t>(168+RNGf::getRange(80.0f)), 0);
 	}
 
 	void solveAttach()

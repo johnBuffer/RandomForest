@@ -10,6 +10,9 @@
 #include "mouse_controller.hpp"
 #include "grass/grass.hpp"
 #include "gauge_bar.hpp"
+#include "layer.hpp"
+
+#include <swarm.hpp>
 
 
 int main()
@@ -21,9 +24,10 @@ int main()
 	settings.antialiasingLevel = 8;
 
     sf::RenderWindow window(sf::VideoMode(WinWidth, WinHeight), "Tree", sf::Style::Fullscreen, settings);
-	window.setFramerateLimit(60);
+	//window.setFramerateLimit(60);
+	//window.setVerticalSyncEnabled(false);
 
-	TreeConf conf = {
+	TreeConf tree_conf{
 		80.0f, // branch_width
 		0.95f, // branch_width_ratio
 		0.5f, // split_width_ratio
@@ -38,23 +42,22 @@ int main()
 		8
 	};
 
-	const uint32_t trees_count = 1;
-	std::vector<Tree> trees;
-	for (uint32_t i(0); i < trees_count; ++i) {
-		trees.emplace_back(Vec2(WinWidth*0.5f, WinHeight), conf);
-		trees.back().fullGrow();
+	LayerConf layer_conf{
+		4,
+		1920.0f,
+		1080.0f,
+		500.0f,
+		tree_conf
+	};
+
+	const uint32_t layers_count = 16;
+	std::vector<Layer> layers;
+	for (uint32_t i(layers_count); i--;) {
+		layers.emplace_back(layer_conf);
+		layers.back().init();
 	}
 
-	TreeRenderer renderer(window);
-	TreeDebugRenderer debug_renderer(window);
-
-	sf::Texture texture;
-	texture.loadFromFile("../res/leaf.png");
-	sf::Font font;
-	font.loadFromFile("../res/font_2.ttf");
-	sf::Text text("Wind Force", font, 20);
-	text.setPosition(20.0f, 50.0f);
-	
+	LayerRenderer renderer(window);
 
 	float base_wind_force = 0.0f;
 	float max_wind_force = 30.0f;
@@ -67,13 +70,11 @@ int main()
 		Wind(150.0f, 2.f, 180.0f),
 	};
 
-	GaugeBar bar(max_wind_force, sf::Vector2f(20.0f, 20.0f), sf::Vector2f(200.0f, 30.0f));
-
 	const float dt = 0.016f;
 
-	const float update_delay = 0.05f;
-	uint64_t last_nodes_count = 0;
 	bool boosting = false;
+
+	swrm::Swarm swarm(16);
 
 	sf::Clock clock;
 	while (window.isOpen())
@@ -86,11 +87,7 @@ int main()
 				window.close();
 			} else if (event.type == sf::Event::KeyReleased) {
 				if (event.key.code == sf::Keyboard::Space) {
-					trees.clear();
-					for (uint32_t i(0); i < trees_count; ++i) {
-						trees.emplace_back(Vec2(WinWidth*0.5f, WinHeight), conf);
-						trees.back().fullGrow();
-					}
+					
 				}
 				else {
 					boosting = false;
@@ -121,43 +118,32 @@ int main()
 			current_wind_force += (base_wind_force - current_wind_force) * 0.1f;
 		}
 
-		bar.setValue(current_wind_force);
-
 		for (Wind& w : wind) {
 			w.update(dt, WinWidth);
 		}
-
-		for (Wind& w : wind) {
-			for (Tree& t : trees) {
-				for (PinnedSegment& p : t.segments) {
-					if (w.isOver(p.particule.position)) {
-						p.particule.acceleration += Vec2(1.0f, RNGf::getRange(2.0f)) * w.strength;
-					}
-				}
-			}
-		}
-
-		for (Tree& t : trees) {
-			t.update(dt, wind);
-		}
+		
+		swrm::WorkGroup group = swarm.execute([&](uint32_t id, uint32_t group_size) {
+			layers[id].update(dt, wind);
+			layers[id].generateRenderArrays();
+		}, 16);
+		group.waitExecutionDone();
 
 		window.clear(sf::Color::Black);
 
-		for (const Tree& t : trees) {
-			renderer.render(t);
-			//debug_renderer.render(t);
+		uint32_t layer_i(0);
+		for (const Layer& l : layers) {
+			sf::RenderStates states;
+			states.transform.translate(WinWidth * 0.25f * (layer_i % 4), WinHeight * 0.25f * (layer_i / 4));
+			states.transform.scale(0.25f, 0.25f);
+			renderer.render(l.render_data, states);
+			++layer_i;
 		}
-
 		/*for (const Wind& w : wind) {
 			sf::RectangleShape wind_debug(sf::Vector2f(w.width, WinHeight));
 			wind_debug.setPosition(w.pos_x - w.width * 0.5f, 0.0f);
 			wind_debug.setFillColor(sf::Color(255, 0, 0, 100));
 			window.draw(wind_debug);
 		}*/
-
-		sf::RenderStates states;
-		bar.render(window, states);
-		window.draw(text);
 
         window.display();
     }

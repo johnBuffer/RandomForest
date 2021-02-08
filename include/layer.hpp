@@ -2,21 +2,16 @@
 #include "tree.hpp"
 #include "grass/grass.hpp"
 #include "wind.hpp"
+#include "layer_render.hpp"
 
 
-struct LayerRender
+struct LayerConf
 {
-	std::vector<sf::VertexArray> branches;
-	sf::VertexArray leaves;
-	sf::VertexArray grass_va;
-
-	LayerRender()
-		: branches()
-		, leaves(sf::Quads)
-		, grass_va(sf::Quads)
-	{
-
-	}
+	uint32_t trees_count;
+	float width;
+	float height;
+	float gap;
+	TreeConf tree_conf;
 };
 
 
@@ -29,12 +24,30 @@ struct Layer
 	std::vector<Grass> grass;
 	// Render
 	LayerRender render_data;
+	// Conf
+	LayerConf config;
+
+	Layer(const LayerConf& conf)
+		: config(conf)
+	{}
 
 	void init()
 	{
 		trees.clear();
 		grass.clear();
 		solver.clear();
+
+		const float trees_zone = config.width - config.gap;
+		for (uint32_t i(config.trees_count); i--;) {
+			Vec2 tree_pos(RNGf::getUnder(trees_zone), config.height);
+			if (tree_pos.x > trees_zone * 0.5f) {
+				tree_pos.x += config.gap;
+			}
+			trees.push_back(Tree(tree_pos, config.tree_conf));
+			trees.back().fullGrow();
+		}
+
+		render_data.init(trees, grass);
 	}
 
 	void update(float dt, const std::vector<Wind>& wind)
@@ -55,6 +68,7 @@ struct Layer
 	void updateTrees(float dt, const std::vector<Wind>& wind)
 	{
 		for (Tree& t : trees) {
+			t.applyWind(wind);
 			t.update(dt, wind);
 		}
 	}
@@ -64,20 +78,18 @@ struct Layer
 		solver.update(dt);
 	}
 
-	void generateGrassRender()
+	void generateGrassRenderData()
 	{
-		render_data.grass_va.clear();
-		for (Grass& g : grass) {
-			g.addToVa(render_data.grass_va);
-		}
+	}
+
+	void generateTreesRenderData()
+	{
+		
 	}
 
 	void generateRenderArrays()
 	{
-		va.clear();
-		for (Grass& g : grass) {
-			g.addToVa(va);
-		}
+		render_data.render(trees);
 	}
 };
 
