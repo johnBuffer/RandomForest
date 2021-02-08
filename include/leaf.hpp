@@ -17,6 +17,7 @@ struct Leaf
 	float joint_strenght;
 
 	sf::Color color;
+	float cut_threshold;
 
 	Leaf(Node::Ptr root, const Vec2& dir)
 		: attach(root)
@@ -24,6 +25,7 @@ struct Leaf
 		, free_particule(root->pos + dir)
 		, target_direction(dir)
 		, joint_strenght(RNGf::getRange(1.0f, 2.0f))
+		, cut_threshold(0.3f + RNGf::getUnder(0.8f))
 	{
 		color = sf::Color(255, static_cast<uint8_t>(168+RNGf::getRange(80.0f)), 0);
 	}
@@ -33,7 +35,6 @@ struct Leaf
 		const float length = 1.0f;
 		const Vec2 delta = free_particule.position - attach->pos;
 		const float dist_delta = 1.0f - delta.getLength();
-		const float cut_threshold = 0.8f;
 		if (std::abs(dist_delta) > cut_threshold) {
 			cut();
 		}

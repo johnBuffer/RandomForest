@@ -9,11 +9,17 @@ struct LayerRender
 	sf::VertexArray branches_va;
 	sf::VertexArray leaves_va;
 	sf::VertexArray grass_va;
+	float width;
+	float height;
+	sf::Color grass_color;
 
-	LayerRender()
+	LayerRender(float width_, float height_)
 		: branches_va(sf::Quads)
 		, leaves_va(sf::Quads)
 		, grass_va(sf::Quads)
+		, width(width_)
+		, height(height_)
+		, grass_color(sf::Color::White)
 	{
 	}
 
@@ -34,7 +40,10 @@ struct LayerRender
 		for (const Grass& g : grass) {
 			points_count += g.points.size() - 1;
 		}
-		grass_va.resize(4 * points_count);
+		// The + 4 is for the ground's quad 
+		grass_va.resize(4 * points_count + 4);
+
+		grass_color = sf::Color(51 + RNGf::getRange(20.0f), 158 + RNGf::getRange(50.0f), 56 + RNGf::getRange(25.0f));
 	}
 
 	void render(std::vector<Tree>& trees)
@@ -72,12 +81,11 @@ struct LayerRender
 			uint64_t global_offset(0);
 			for (const Tree& t : trees) {
 				uint64_t i(0);
-				const float leaf_length = 30.0f;
-				const float leaf_width = 30.0f;
+				const float leaf_size = 60.0f;
 				for (const Leaf& l : t.leaves) {
 					const Vec2 leaf_dir = l.getDir().getNormalized();
-					const Vec2 dir = leaf_dir * leaf_length;
-					const Vec2 nrm = leaf_dir.getNormal() * (0.5f * leaf_width);
+					const Vec2 dir = leaf_dir * leaf_size;
+					const Vec2 nrm = leaf_dir.getNormal() * (0.5f * leaf_size);
 					const Vec2 attach = l.getPosition();
 					const Vec2 pt1 = attach + nrm;
 					const Vec2 pt2 = attach + nrm + dir;
@@ -109,7 +117,7 @@ struct LayerRender
 	{
 		uint64_t global_offset = 0;
 		for (const Grass& g : grass) {
-			const float initial_width = 1.0f;
+			const float initial_width = 3.0f;
 			float width = initial_width;
 			const uint64_t points_count = g.points.size() - 1;
 			// Add points
@@ -124,13 +132,24 @@ struct LayerRender
 				grass_va[global_offset + 4 * i + 2].position = sf::Vector2f(next_pt.x + width * v.y, next_pt.y - width * v.x);
 				grass_va[global_offset + 4 * i + 3].position = sf::Vector2f(next_pt.x - width * v.y, next_pt.y + width * v.x);
 				// Color
-				grass_va[global_offset + 4 * i + 0].color = g.color;
-				grass_va[global_offset + 4 * i + 1].color = g.color;
-				grass_va[global_offset + 4 * i + 2].color = g.color;
-				grass_va[global_offset + 4 * i + 3].color = g.color;
+				grass_va[global_offset + 4 * i + 0].color = grass_color;
+				grass_va[global_offset + 4 * i + 1].color = grass_color;
+				grass_va[global_offset + 4 * i + 2].color = grass_color;
+				grass_va[global_offset + 4 * i + 3].color = grass_color;
 			}
 			global_offset += 4 * points_count;
 		}
+
+		const float depth = 1000.0f;
+		grass_va[global_offset + 0].position = sf::Vector2f(0.0f, height);
+		grass_va[global_offset + 1].position = sf::Vector2f(width, height);
+		grass_va[global_offset + 2].position = sf::Vector2f(width, height + depth);
+		grass_va[global_offset + 3].position = sf::Vector2f(0.0f, height + depth);
+
+		grass_va[global_offset + 0].color = grass_color;
+		grass_va[global_offset + 1].color = grass_color;
+		grass_va[global_offset + 2].color = grass_color;
+		grass_va[global_offset + 3].color = grass_color;
 	}
 };
 
@@ -151,6 +170,8 @@ struct LayerRenderer
 		target.draw(layer.branches_va, states);
 		states.texture = &texture;
 		target.draw(layer.leaves_va, states);
+		states.texture = nullptr;
+		target.draw(layer.grass_va, states);
 	}
 };
 

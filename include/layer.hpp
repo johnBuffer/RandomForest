@@ -26,9 +26,15 @@ struct Layer
 	LayerRender render_data;
 	// Conf
 	LayerConf config;
+	// Distance to camera
+	float dist;
+	bool back_to_end;
 
-	Layer(const LayerConf& conf)
-		: config(conf)
+	Layer(const LayerConf& conf, float dist_)
+		: render_data(conf.width, conf.height)
+		, config(conf)
+		, dist(dist_)
+		, back_to_end(false)
 	{}
 
 	void init()
@@ -45,6 +51,10 @@ struct Layer
 			}
 			trees.push_back(Tree(tree_pos, config.tree_conf));
 			trees.back().fullGrow();
+		}
+
+		for (float x(0.0f); x < config.width; x += 1.0f) {
+			grass.push_back(Grass::add(solver, x, config.height, RNGf::getRange(10.0f, 30.0f)));
 		}
 
 		render_data.init(trees, grass);
@@ -90,6 +100,7 @@ struct Layer
 	void generateRenderArrays()
 	{
 		render_data.render(trees);
+		render_data.render(grass);
 	}
 };
 

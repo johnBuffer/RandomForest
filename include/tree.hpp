@@ -85,7 +85,7 @@ struct Branch
 			Node::Ptr new_node = Node::create(start, direction, new_length, new_width, level, index + 1);
 			nodes.push_back(new_node);
 			// Check for split
-			if (index && (index % 4 == 0) && level < conf.max_level) {
+			if (index && (index % 5 == 0) && level < conf.max_level) {
 				result.root = new_node;
 				result.split = true;
 				float split_angle = conf.branch_split_angle + getRandRange(conf.branch_split_var);

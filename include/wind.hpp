@@ -12,7 +12,7 @@ struct Wind
 		: width(w)
 		, strength(force)
 		, speed(spd)
-		, pos_x(start-w*0.5f)
+		, pos_x(start ? start : -w*0.5f)
 	{
 
 	}

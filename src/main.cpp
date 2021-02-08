@@ -24,36 +24,38 @@ int main()
 	settings.antialiasingLevel = 8;
 
     sf::RenderWindow window(sf::VideoMode(WinWidth, WinHeight), "Tree", sf::Style::Fullscreen, settings);
-	//window.setFramerateLimit(60);
+	window.setFramerateLimit(60);
 	//window.setVerticalSyncEnabled(false);
 
 	TreeConf tree_conf{
-		80.0f, // branch_width
+		100.0f, // branch_width
 		0.95f, // branch_width_ratio
 		0.5f, // split_width_ratio
 		0.25f, // deviation
 		PI * 0.25f, // split angle
 		0.1f, // branch_split_var;
-		15.0f, // branch_length;
+		30.0f, // branch_length;
 		0.99f, // branch_length_ratio;
 		0.5f, // branch_split_proba;
 		0.0f, // double split
-		Vec2(0.0f, -0.5f), // Attraction
+		Vec2(0.0f, -1.5f), // Attraction
 		8
 	};
 
 	LayerConf layer_conf{
 		4,
-		1920.0f,
+		4000.0f,
 		1080.0f,
-		500.0f,
+		1000.0f,
 		tree_conf
 	};
 
-	const uint32_t layers_count = 16;
+	const uint32_t layers_count = 12;
+	int32_t current_last = 0;
 	std::vector<Layer> layers;
+	const float layer_space = 2.0f;
 	for (uint32_t i(layers_count); i--;) {
-		layers.emplace_back(layer_conf);
+		layers.emplace_back(layer_conf, float(i) * layer_space);
 		layers.back().init();
 	}
 
@@ -64,17 +66,18 @@ int main()
 	float current_wind_force = 0.0f;
 
 	std::vector<Wind> wind{
-		Wind(WinWidth, base_wind_force, 0.0f, WinWidth),
-		Wind(200.0f, 3.f, 500.0f),
-		Wind(100.0f, 2.f, 250.0f),
-		Wind(150.0f, 2.f, 180.0f),
+		Wind(2.0f * layer_conf.width, base_wind_force, 0.0f, layer_conf.width),
+		Wind(300.0f, 3.f, 500.0f),
+		Wind(200.0f, 2.f, 250.0f),
+		Wind(850.0f, 3.f, 1080.0f),
+		Wind(250.0f, 8.f, 400.0f),
 	};
 
 	const float dt = 0.016f;
 
 	bool boosting = false;
 
-	swrm::Swarm swarm(16);
+	swrm::Swarm swarm(layers_count);
 
 	sf::Clock clock;
 	while (window.isOpen())
@@ -119,31 +122,60 @@ int main()
 		}
 
 		for (Wind& w : wind) {
-			w.update(dt, WinWidth);
+			w.update(dt, layer_conf.width);
 		}
 		
 		swrm::WorkGroup group = swarm.execute([&](uint32_t id, uint32_t group_size) {
-			layers[id].update(dt, wind);
-			layers[id].generateRenderArrays();
-		}, 16);
+			const float dist_threshold = 0.1f;
+			Layer& layer = layers[id];
+			if (layer.dist > dist_threshold) {
+				layer.update(dt, wind);
+				layer.generateRenderArrays();
+			}
+			else {
+				layer.dist = (group_size - 1) * layer_space;
+				layer.back_to_end = true;
+				layer.init();
+			}
+		}, layers_count);
 		group.waitExecutionDone();
+
+		const float scroll_speed = 3.0f;
+		for (Layer& l : layers) {
+			l.dist -= scroll_speed * dt;
+			if (l.back_to_end) {
+				--current_last;
+				if (current_last < 0) {
+					current_last += layers_count;
+				}
+				l.back_to_end = false;
+			}
+		}
 
 		window.clear(sf::Color::Black);
 
-		uint32_t layer_i(0);
-		for (const Layer& l : layers) {
+		const sf::Vector2f mid_window(float(WinWidth) * 0.5f, float(WinHeight) * 0.65f);
+		const sf::Vector2f mid_layer(layer_conf.width * 0.5f, layer_conf.height * 0.8f);
+		const float max_depth = layers_count * layer_space;
+		uint64_t layer_i(layers.size() - 1);
+		
+		for (int32_t i(0); i<layers_count; ++i) {
+			int32_t index = (current_last + i) % layers_count;
+
+			const Layer& l = layers[index];
+			const float scale = 2.0f / (l.dist + 0.1f);
+
 			sf::RenderStates states;
-			states.transform.translate(WinWidth * 0.25f * (layer_i % 4), WinHeight * 0.25f * (layer_i / 4));
-			states.transform.scale(0.25f, 0.25f);
+			states.transform.translate(mid_window);
+			states.transform.scale(scale, scale);
+			states.transform.translate(-mid_layer);
 			renderer.render(l.render_data, states);
-			++layer_i;
+
+			sf::RectangleShape fade(sf::Vector2f(WinWidth, WinHeight));
+			fade.setFillColor(sf::Color(0, 0, 0, (100.0f * l.dist / max_depth)));
+			window.draw(fade);
+			--layer_i;
 		}
-		/*for (const Wind& w : wind) {
-			sf::RectangleShape wind_debug(sf::Vector2f(w.width, WinHeight));
-			wind_debug.setPosition(w.pos_x - w.width * 0.5f, 0.0f);
-			wind_debug.setFillColor(sf::Color(255, 0, 0, 100));
-			window.draw(wind_debug);
-		}*/
 
         window.display();
     }
