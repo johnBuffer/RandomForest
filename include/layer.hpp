@@ -12,6 +12,7 @@ struct LayerConf
 	float height;
 	float gap;
 	TreeConf tree_conf;
+	float depth_spacing;
 };
 
 

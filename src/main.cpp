@@ -47,7 +47,8 @@ int main()
 		2500.0f,
 		1080.0f,
 		1200.0f,
-		tree_conf
+		tree_conf,
+		2.0f
 	};
 
 	const uint32_t layers_count = 12;

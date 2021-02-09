@@ -57,6 +57,8 @@ struct LayerRender
 				for (const Branch& b : t.branches) {
 					const uint64_t nodes_count = b.nodes.size() - 1;
 					for (uint64_t i(0); i < nodes_count; ++i) {
+						// TODO: fix dir by using current - next (because the stored dir vec is not rotated
+
 						// Current node
 						{
 							const Node& n = *(b.nodes[i]);
