@@ -87,7 +87,7 @@ struct Leaf
 
 	void applyWind(const Wind& wind)
 	{
-		const float ratio = (1.0f - std::abs(wind.pos_x - free_particule.position.x) / (0.5f * wind.width));
+		const float ratio = 1.0f;
 		const float wind_force = wind.strength * (wind.speed ? ratio : 1.0f);
 		free_particule.acceleration += Vec2(1.0f, RNGf::getRange(2.0f)) * wind_force;
 		if (!attach) {

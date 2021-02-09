@@ -55,6 +55,7 @@ struct Layer
 			const float size_var = RNGf::getRange(-20.0f, 20.0f);
 			conf.branch_length += size_var;
 			conf.branch_width += 2.0f * size_var;
+			conf.branch_deviation += -0.1f * std::min(size_var, 0.0f);
 
 			trees.push_back(Tree(tree_pos, conf));
 			trees.back().fullGrow();
@@ -95,10 +96,16 @@ struct Layer
 		solver.update(dt);
 	}
 
-	void generateRenderArrays()
+	void generateRenderArrays(float dist_threshold)
 	{
-		render_data.render(trees);
-		render_data.render(grass);
+		float opacity = 1.0f;
+		const float threshold_factor = 5.0f;
+		if (dist < threshold_factor * dist_threshold) {
+			opacity = (dist - dist_threshold) / ((threshold_factor - 1.0f) * dist_threshold);
+		}
+		
+		render_data.render(trees, opacity);
+		render_data.render(grass, opacity);
 	}
 };
 

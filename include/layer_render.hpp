@@ -46,8 +46,10 @@ struct LayerRender
 		grass_color = sf::Color::Black;// sf::Color(51 + RNGf::getRange(20.0f), 158 + RNGf::getRange(50.0f), 56 + RNGf::getRange(25.0f));
 	}
 
-	void render(std::vector<Tree>& trees)
+	void render(std::vector<Tree>& trees, float opacity)
 	{
+		const sf::Color color(0, 0, 0, static_cast<uint8_t>(255.0f * opacity));
+
 		// Branches
 		{
 			uint64_t global_offset(0);
@@ -63,8 +65,8 @@ struct LayerRender
 							branches_va[global_offset + 4 * i + 0].position = sf::Vector2f(n.pos.x + n_vec.x, n.pos.y + n_vec.y);
 							branches_va[global_offset + 4 * i + 1].position = sf::Vector2f(n.pos.x - n_vec.x, n.pos.y - n_vec.y);
 
-							branches_va[global_offset + 4 * i + 0].color = sf::Color::Black;
-							branches_va[global_offset + 4 * i + 1].color = sf::Color::Black;
+							branches_va[global_offset + 4 * i + 0].color = color;
+							branches_va[global_offset + 4 * i + 1].color = color;
 						}
 						// Next node
 						{
@@ -73,8 +75,8 @@ struct LayerRender
 							const Vec2 n_vec = n.growth_direction.getNormal() * width;
 							branches_va[global_offset + 4 * i + 2].position = sf::Vector2f(n.pos.x - n_vec.x, n.pos.y - n_vec.y);
 							branches_va[global_offset + 4 * i + 3].position = sf::Vector2f(n.pos.x + n_vec.x, n.pos.y + n_vec.y);
-							branches_va[global_offset + 4 * i + 2].color = sf::Color::Black;
-							branches_va[global_offset + 4 * i + 3].color = sf::Color::Black;
+							branches_va[global_offset + 4 * i + 2].color = color;
+							branches_va[global_offset + 4 * i + 3].color = color;
 						}
 					}
 					global_offset += 4 * nodes_count;
@@ -107,10 +109,10 @@ struct LayerRender
 					leaves_va[global_offset + 4 * i + 2].texCoords = sf::Vector2f(1024.0f, 1024.0f);
 					leaves_va[global_offset + 4 * i + 3].texCoords = sf::Vector2f(0.0f, 1024.0f);
 					// Color
-					leaves_va[global_offset + 4 * i + 0].color = l.color;
-					leaves_va[global_offset + 4 * i + 1].color = l.color;
-					leaves_va[global_offset + 4 * i + 2].color = l.color;
-					leaves_va[global_offset + 4 * i + 3].color = l.color;
+					leaves_va[global_offset + 4 * i + 0].color = color;
+					leaves_va[global_offset + 4 * i + 1].color = color;
+					leaves_va[global_offset + 4 * i + 2].color = color;
+					leaves_va[global_offset + 4 * i + 3].color = color;
 					++i;
 				}
 				global_offset += 4 * i;
@@ -118,11 +120,12 @@ struct LayerRender
 		}
 	}
 
-	void render(std::vector<Grass>& grass)
+	void render(std::vector<Grass>& grass, float opacity)
 	{
+		const sf::Color color(0, 0, 0, static_cast<uint8_t>(255.0f * opacity));
 		uint64_t global_offset = 0;
 		for (const Grass& g : grass) {
-			const float initial_width = 2.0f;
+			const float initial_width = 4.0f;
 			float width = initial_width;
 			const uint64_t points_count = g.points.size() - 1;
 			// Add points
@@ -137,10 +140,10 @@ struct LayerRender
 				grass_va[global_offset + 4 * i + 2].position = sf::Vector2f(next_pt.x + width * v.y, next_pt.y - width * v.x);
 				grass_va[global_offset + 4 * i + 3].position = sf::Vector2f(next_pt.x - width * v.y, next_pt.y + width * v.x);
 				// Color
-				grass_va[global_offset + 4 * i + 0].color = grass_color;
-				grass_va[global_offset + 4 * i + 1].color = grass_color;
-				grass_va[global_offset + 4 * i + 2].color = grass_color;
-				grass_va[global_offset + 4 * i + 3].color = grass_color;
+				grass_va[global_offset + 4 * i + 0].color = color;
+				grass_va[global_offset + 4 * i + 1].color = color;
+				grass_va[global_offset + 4 * i + 2].color = color;
+				grass_va[global_offset + 4 * i + 3].color = color;
 			}
 			global_offset += 4 * points_count;
 		}
@@ -151,10 +154,10 @@ struct LayerRender
 		grass_va[global_offset + 2].position = sf::Vector2f(width, height + depth);
 		grass_va[global_offset + 3].position = sf::Vector2f(0.0f, height + depth);
 
-		grass_va[global_offset + 0].color = grass_color;
-		grass_va[global_offset + 1].color = grass_color;
-		grass_va[global_offset + 2].color = grass_color;
-		grass_va[global_offset + 3].color = grass_color;
+		grass_va[global_offset + 0].color = color;
+		grass_va[global_offset + 1].color = color;
+		grass_va[global_offset + 2].color = color;
+		grass_va[global_offset + 3].color = color;
 	}
 };
 

@@ -43,7 +43,7 @@ int main()
 	};
 
 	LayerConf layer_conf{
-		5,
+		2,
 		2500.0f,
 		1080.0f,
 		1200.0f,
@@ -143,7 +143,7 @@ int main()
 			Layer& layer = layers[id];
 			if (layer.dist > dist_threshold) {
 				layer.update(dt, wind);
-				layer.generateRenderArrays();
+				layer.generateRenderArrays(dist_threshold);
 			}
 			else {
 				layer.dist = group_size * layer_space;
@@ -175,6 +175,9 @@ int main()
 		for (int32_t i(0); i<layers_count; ++i) {
 			int32_t index = (current_last + i) % layers_count;
 
+			const uint32_t side_id = (index + 2) % layers_count;
+			const Layer& l_side = layers[index];
+
 			const Layer& l = layers[index];
 			const float scale = 2.0f / (l.dist + 0.1f);
 
@@ -185,17 +188,18 @@ int main()
 			// Left
 			sf::RenderStates states_left = states;
 			states_left.transform.translate(-layer_conf.width, 0.0f);
-			renderer.render(l.render_data, states_left);
+			renderer.render(l_side.render_data, states_left);
 			// Mid
 			renderer.render(l.render_data, states);
 			// Right
 			sf::RenderStates states_right = states;
 			states_right.transform.translate(layer_conf.width, 0.0f);
-			renderer.render(l.render_data, states_right);
+			renderer.render(l_side.render_data, states_right);
 
-			renderer.renderGrass(l.render_data, states_left);
+			// Fake side id
+			renderer.renderGrass(l_side.render_data, states_left);
 			renderer.renderGrass(l.render_data, states);
-			renderer.renderGrass(l.render_data, states_right);
+			renderer.renderGrass(l_side.render_data, states_right);
 
 			sf::VertexArray fade(sf::Quads, 4);
 			fade[0].position = sf::Vector2f(0.0f, 0.0f);
