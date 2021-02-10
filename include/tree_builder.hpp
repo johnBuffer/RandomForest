@@ -71,7 +71,7 @@ struct TreeBuilder
 		return result;
 	}
 
-	void grow(Tree& tree, const TreeConf& conf)
+	static void grow(Tree& tree, const TreeConf& conf)
 	{
 		std::vector<GrowthResult> to_add;
 		for (Branch& b : tree.branches) {
@@ -86,8 +86,12 @@ struct TreeBuilder
 		}
 	}
 
-	void fullGrow(Tree& tree, const TreeConf& conf)
+	static void fullGrow(Tree& tree, const TreeConf& conf)
 	{
+		tree.branches.clear();
+		tree.leaves.clear();
+		tree.segments.clear();
+
 		// Create root
 		float base_angle = -PI * 0.5f;
 		tree.branches.emplace_back(tree.root, tree.root->pos, base_angle, conf.branch_length, conf.branch_width);
@@ -102,6 +106,6 @@ struct TreeBuilder
 		}
 		// Add physic and leaves
 		tree.createSkeleton();
-		tree.addLeaves();
+		//tree.addLeaves();
 	}
 };

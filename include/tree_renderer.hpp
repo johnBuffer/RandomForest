@@ -20,6 +20,24 @@ public:
 		leaf_sprite.setScale(0.02f, 0.02f);
 	}
 
+	static void generateRenderData(const Tree& tree, std::vector<sf::VertexArray>& branches_va)
+	{
+		// Create branches
+		branches_va.clear();
+		for (const Branch& b : tree.branches) {
+			branches_va.emplace_back(sf::TriangleStrip, b.nodes.size() * 2);
+			sf::VertexArray& va = branches_va.back();
+			uint64_t i(0);
+			for (const Node::Ptr n : b.nodes) {
+				const float width = 0.5f * n->width;
+				const Vec2 n_vec = n->growth_direction.getNormal() * width;
+				va[2 * i].position = sf::Vector2f(n->pos.x + n_vec.x, n->pos.y + n_vec.y);
+				va[2 * i + 1].position = sf::Vector2f(n->pos.x - n_vec.x, n->pos.y - n_vec.y);
+				++i;
+			}
+		}
+	}
+
 	static void generateRenderData(const v2::Tree& tree, std::vector<sf::VertexArray>& branches_va/*, sf::VertexArray& leaves_va*/)
 	{
 		// Create branches

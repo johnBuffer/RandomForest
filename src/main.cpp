@@ -11,6 +11,8 @@
 #include "grass/grass.hpp"
 #include "gauge_bar.hpp"
 #include "layer.hpp"
+#include "tree_builder.hpp"
+
 #include "tree_2.hpp"
 #include "tree_builder_2.hpp"
 
@@ -24,7 +26,7 @@ int main()
 	settings.antialiasingLevel = 8;
 
     sf::RenderWindow window(sf::VideoMode(WinWidth, WinHeight), "Tree", sf::Style::Default, settings);
-	//window.setFramerateLimit(60);
+	window.setFramerateLimit(60);
 	//window.setVerticalSyncEnabled(false);
 
 	TreeConf tree_conf{
@@ -60,7 +62,10 @@ int main()
 	}
 
 	std::vector<sf::VertexArray> branches_va;
-	v2::Tree tree = v2::TreeBuilder::build(Vec2(WinWidth * 0.5f, WinHeight), tree_conf);
+	v2::Tree tree_fast = v2::TreeBuilder::build(Vec2(WinWidth * 0.25f, WinHeight), tree_conf);
+
+	Tree tree(Vec2(WinWidth * 0.75f, WinHeight));
+	TreeBuilder::fullGrow(tree, tree_conf);
 
 	LayerRenderer renderer(window);
 
@@ -79,6 +84,10 @@ int main()
 
 	const float dt = 0.016f;
 
+	float time_sum_1 = 0.0f;
+	float time_sum_2 = 0.0f;
+	float img_count = 0.0f;
+
 	bool boosting = false;
 
 	sf::Clock clock;
@@ -92,7 +101,8 @@ int main()
 				window.close();
 			} else if (event.type == sf::Event::KeyReleased) {
 				if (event.key.code == sf::Keyboard::Space) {
-					tree = v2::TreeBuilder::build(Vec2(WinWidth * 0.5f, WinHeight), tree_conf);
+					tree_fast = v2::TreeBuilder::build(Vec2(WinWidth * 0.25f, WinHeight), tree_conf);
+					TreeBuilder::fullGrow(tree, tree_conf);
 				}
 				else {
 					boosting = false;
@@ -129,28 +139,48 @@ int main()
 			}
 		}
 
-		TreeRenderer::generateRenderData(tree, branches_va);
-
 		for (Wind& w : wind) {
 			w.update(dt, layer_conf.width);
 
-			for (v2::Branch& b : tree.branches) {
+			for (v2::Branch& b : tree_fast.branches) {
 				if (w.isOver(b.segment.moving_point)) {
 					b.segment.acceleration += Vec2(1.0f, 0.0f) * w.strength;
+				}
+			}
+
+			for (PinnedSegment& s : tree.segments) {
+				if (w.isOver(s.particule.position)) {
+					s.particule.acceleration += Vec2(1.0f, 0.0f) * w.strength * 0.1f;
 				}
 			}
 		}
 
 		if (boosting) {
-			for (v2::Branch& b : tree.branches) {
+			for (v2::Branch& b : tree_fast.branches) {
 				b.segment.acceleration += Vec2(1.0f, 0.0f) * wind_force;
 			}
 		}
 
-		tree.update(dt);
+		sf::Clock tree_clock;
+		tree.update(dt, wind);
+		const float elapsed = tree_clock.getElapsedTime().asMicroseconds();
+		time_sum_1 += elapsed;
+		std::cout << "Tree update: " << time_sum_1 / (img_count + 1.0f) << "us" << std::endl;
+
+		sf::Clock tree_2_clock;
+		tree_fast.update(dt);
+		const float elapsed_2 = tree_2_clock.getElapsedTime().asMicroseconds();
+		time_sum_2 += elapsed_2;
+		std::cout << "Tree 2 update: " << time_sum_2 / (img_count + 1.0f) << "us" << std::endl;
 
 		window.clear(sf::Color::Black);
 
+		TreeRenderer::generateRenderData(tree_fast, branches_va);
+		for (auto& va : branches_va) {
+			window.draw(va);
+		}
+
+		TreeRenderer::generateRenderData(tree, branches_va);
 		for (auto& va : branches_va) {
 			window.draw(va);
 		}
@@ -178,6 +208,8 @@ int main()
 			++i;
 		}
 		window.draw(va_debug);*/
+
+		img_count += 1.0f;
 
         window.display();
     }

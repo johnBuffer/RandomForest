@@ -67,7 +67,7 @@ struct Tree
 		uint64_t i(0);
 		for (Branch& b : branches) {
 			Vec2 free_point = b.nodes.back()->pos;
-			const float strength = 1000.0f * static_cast<float>(std::pow(0.1f, b.root->level));
+			const float strength = 500.0f * static_cast<float>(std::pow(0.8f, b.root->level));
 			segments.emplace_back(b.nodes.front(), free_point, i, strength);
 			++i;
 		}
@@ -95,7 +95,7 @@ struct Tree
 			b.update();
 		}
 
-		for (Leaf& l : leaves) {
+		/*for (Leaf& l : leaves) {
 			for (const Wind& w : wind) {
 				if (w.isOver(l.free_particule.position)) {
 					l.applyWind(w);
@@ -103,7 +103,7 @@ struct Tree
 			}
 			
 			l.update(dt);
-		}
+		}*/
 	}
 
 	void applyWind(const std::vector<Wind>& wind)

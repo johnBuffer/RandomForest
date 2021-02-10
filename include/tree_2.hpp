@@ -61,7 +61,7 @@ namespace v2
 
 		void update(float dt)
 		{
-			acceleration -= velocity;
+			acceleration -= velocity * 0.5f;
 			velocity += acceleration * dt;
 			applyConstraint();
 			moving_point += velocity * dt;
@@ -118,6 +118,18 @@ namespace v2
 		}
 	};
 
+	struct NodeRef
+	{
+		uint32_t branch_id;
+		uint32_t node_id;
+	};
+
+	struct Leaf
+	{
+		PhysicSegment segment;
+		NodeRef attact;
+	};
+
 	struct Branch
 	{
 		std::vector<Node> nodes;
@@ -134,7 +146,7 @@ namespace v2
 		Branch(const Node& node, uint32_t lvl)
 			: nodes{node}
 			, level(lvl)
-			, joint_strength(1000.0f * std::pow(0.8f, level))
+			, joint_strength(40000.0f * std::pow(0.7f, level))
 		{}
 
 		void update(float dt)
@@ -176,9 +188,7 @@ namespace v2
 		std::vector<Branch> branches;
 
 		Tree()
-		{
-
-		}
+		{}
 
 		void update(float dt)
 		{
@@ -204,9 +214,6 @@ namespace v2
 			const Vec2 origin = b.nodes.front().position;
 			for (Node& n : b.nodes) {
 				n.position.rotate(origin, mat);
-				if (n.branch_id) {
-					branches[n.branch_id].rotateTargetDir(mat);
-				}
 			}
 		}
 
