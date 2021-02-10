@@ -11,9 +11,10 @@ struct RotMat2
 		, sina(sin(angle))
 	{}
 
-	Vec2 apply(const Vec2& v) const
+	void apply(float x_in, float y_in, float& x_out, float& y_out) const
 	{
-		return Vec2(cosa * v.x - sina * v.y, sina * v.x + cosa * v.y);
+		x_out = cosa * x_in - sina * y_in;
+		y_out = sina * x_in + cosa * y_in;
 	}
 };
 
@@ -79,9 +80,9 @@ struct Vec2
 	void rotate(const Vec2& origin, const RotMat2& mat)
 	{
 		const Vec2 v(x - origin.x, y - origin.y);
-		const Vec2 rotated = mat.apply(v);
-		x = rotated.x + origin.x;
-		y = rotated.y + origin.y;
+		mat.apply(v.x, v.y, x, y);
+		x += origin.x;
+		y += origin.y;
 	}
 
 	float getAngle() const
