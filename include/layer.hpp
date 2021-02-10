@@ -3,6 +3,7 @@
 #include "grass/grass.hpp"
 #include "wind.hpp"
 #include "layer_render.hpp"
+#include "tree_builder.hpp"
 
 
 struct LayerConf
@@ -57,8 +58,8 @@ struct Layer
 			conf.branch_width += 2.0f * size_var;
 			conf.branch_deviation += -0.1f * std::min(size_var, 0.0f);
 
-			trees.push_back(Tree(tree_pos, conf));
-			trees.back().fullGrow();
+			trees.push_back(Tree(tree_pos));
+			trees.back();
 		}
 
 		for (float x(0.0f); x < config.width; x += 1.0f) {

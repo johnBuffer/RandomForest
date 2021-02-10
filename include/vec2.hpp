@@ -2,8 +2,26 @@
 #include <cmath>
 
 
+struct RotMat2
+{
+	float cosa, sina;
+
+	RotMat2(float angle)
+		: cosa(cos(angle))
+		, sina(sin(angle))
+	{}
+
+	Vec2 apply(const Vec2& v) const
+	{
+		return Vec2(cosa * v.x - sina * v.y, sina * v.x + cosa * v.y);
+	}
+};
+
+
 struct Vec2
 {
+	float x, y;
+
 	Vec2()
 		: x(0.0f)
 		, y(0.0f)
@@ -13,8 +31,6 @@ struct Vec2
 		: x(x_)
 		, y(y_)
 	{}
-
-	float x, y;
 
 	void operator+=(const Vec2& v)
 	{
@@ -51,16 +67,21 @@ struct Vec2
 
 	void rotate(float angle)
 	{
-		rotate(Vec2(), angle);
+		const RotMat2 mat(angle);
+		rotate(Vec2(), mat);
 	}
 
-	void rotate(const Vec2& origin, float angle)
+	void rotate(const RotMat2& mat)
+	{
+		rotate(Vec2(), mat);
+	}
+
+	void rotate(const Vec2& origin, const RotMat2& mat)
 	{
 		const Vec2 v(x - origin.x, y - origin.y);
-		const float ca = cos(angle);
-		const float sa = sin(angle);
-		x = (ca * v.x - sa * v.y) + origin.x;
-		y = (sa * v.x + ca * v.y) + origin.y;
+		const Vec2 rotated = mat.apply(v);
+		x = rotated.x + origin.x;
+		y = rotated.y + origin.y;
 	}
 
 	float getAngle() const

@@ -11,8 +11,8 @@
 #include "grass/grass.hpp"
 #include "gauge_bar.hpp"
 #include "layer.hpp"
-
-#include <swarm.hpp>
+#include "tree_2.hpp"
+#include "tree_builder.hpp"
 
 
 int main()
@@ -78,7 +78,7 @@ int main()
 
 	bool boosting = false;
 
-	swrm::Swarm swarm(layers_count);
+	v2::PhysicSegment segment(Vec2(WinWidth * 0.5f, WinHeight * 0.5f), Vec2(WinWidth * 0.5f, WinHeight * 0.5f) + Vec2(100.0f, 0.0f));
 
 	sf::Clock clock;
 	while (window.isOpen())
@@ -137,84 +137,15 @@ int main()
 		for (Wind& w : wind) {
 			w.update(dt, layer_conf.width);
 		}
-		
-		swrm::WorkGroup group = swarm.execute([&](uint32_t id, uint32_t group_size) {
-			const float dist_threshold = 0.1f;
-			Layer& layer = layers[id];
-			if (layer.dist > dist_threshold) {
-				layer.update(dt, wind);
-				layer.generateRenderArrays(dist_threshold);
-			}
-			else {
-				layer.dist = group_size * layer_space;
-				layer.back_to_end = true;
-				layer.init();
-			}
-		}, layers_count);
-		group.waitExecutionDone();
 
-		const float scroll_speed = 1.0f;
-		for (Layer& l : layers) {
-			l.dist -= scroll_speed * dt;
-			if (l.back_to_end) {
-				--current_last;
-				if (current_last < 0) {
-					current_last += layers_count;
-				}
-				l.back_to_end = false;
-			}
-		}
+		segment.update(dt);
 
 		window.clear(sf::Color::Black);
 
-		const sf::Vector2f mid_window(float(WinWidth) * 0.5f, float(WinHeight) * 0.65f);
-		const sf::Vector2f mid_layer(layer_conf.width * 0.5f, layer_conf.height * 0.9f);
-		const float max_depth = layers_count * layer_space;
-		uint64_t layer_i(layers.size() - 1);
-		
-		for (int32_t i(0); i<layers_count; ++i) {
-			int32_t index = (current_last + i) % layers_count;
-
-			const uint32_t side_id = (index + 2) % layers_count;
-			const Layer& l_side = layers[index];
-
-			const Layer& l = layers[index];
-			const float scale = 2.0f / (l.dist + 0.1f);
-
-			sf::RenderStates states;
-			states.transform.translate(mid_window);
-			states.transform.scale(scale, scale);
-			states.transform.translate(-mid_layer);
-			// Left
-			sf::RenderStates states_left = states;
-			states_left.transform.translate(-layer_conf.width, 0.0f);
-			renderer.render(l_side.render_data, states_left);
-			// Mid
-			renderer.render(l.render_data, states);
-			// Right
-			sf::RenderStates states_right = states;
-			states_right.transform.translate(layer_conf.width, 0.0f);
-			renderer.render(l_side.render_data, states_right);
-
-			// Fake side id
-			renderer.renderGrass(l_side.render_data, states_left);
-			renderer.renderGrass(l.render_data, states);
-			renderer.renderGrass(l_side.render_data, states_right);
-
-			sf::VertexArray fade(sf::Quads, 4);
-			fade[0].position = sf::Vector2f(0.0f, 0.0f);
-			fade[1].position = sf::Vector2f(WinWidth, 0.0f);
-			fade[2].position = sf::Vector2f(WinWidth, WinHeight);
-			fade[3].position = sf::Vector2f(0.0f, WinHeight);
-
-			fade[0].color = sf::Color(255, 171, 133, (100.0f * l.dist / max_depth));
-			fade[1].color = sf::Color(255, 171, 133, (100.0f * l.dist / max_depth));
-			fade[2].color = sf::Color(255, 255, 255, (100.0f * l.dist / max_depth));
-			fade[3].color = sf::Color(255, 255, 255, (100.0f * l.dist / max_depth));
-
-			window.draw(fade);
-			--layer_i;
-		}
+		sf::VertexArray va(sf::Lines, 2);
+		va[0].position = sf::Vector2f(segment.attach_point.x, segment.attach_point.y);
+		va[1].position = sf::Vector2f(segment.moving_point.x, segment.moving_point.y);
+		window.draw(va);
 
         window.display();
     }
