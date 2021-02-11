@@ -143,21 +143,21 @@ int main()
 			w.update(dt, layer_conf.width);
 
 			for (v2::Branch& b : tree_fast.branches) {
-				if (w.isOver(b.segment.moving_point)) {
-					b.segment.acceleration += Vec2(1.0f, 0.0f) * w.strength;
+				if (w.isOver(b.segment.moving_point.position)) {
+					b.segment.moving_point.acceleration += Vec2(1.0f, 0.0f) * w.strength;
 				}
 			}
 
 			for (PinnedSegment& s : tree.segments) {
 				if (w.isOver(s.particule.position)) {
-					s.particule.acceleration += Vec2(1.0f, 0.0f) * w.strength * 0.1f;
+					s.particule.acceleration += Vec2(1.0f, 0.0f) * w.strength;
 				}
 			}
 		}
 
 		if (boosting) {
 			for (v2::Branch& b : tree_fast.branches) {
-				b.segment.acceleration += Vec2(1.0f, 0.0f) * wind_force;
+				b.segment.moving_point.acceleration += Vec2(1.0f, 0.0f) * wind_force;
 			}
 		}
 

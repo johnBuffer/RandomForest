@@ -1,5 +1,6 @@
 #pragma once
 #include "vec2.hpp"
+#include "pinned_segment.hpp"
 
 
 namespace v2
@@ -7,10 +8,8 @@ namespace v2
 	struct PhysicSegment
 	{
 		Vec2 attach_point;
-		Vec2 moving_point;
-		Vec2 velocity;
-		Vec2 acceleration;
 		Vec2 direction;
+		Particule moving_point;
 		float length;
 		float delta_angle;
 		float last_angle;
@@ -19,10 +18,8 @@ namespace v2
 
 		PhysicSegment(Vec2 attach, Vec2 moving)
 			: attach_point(attach)
-			, moving_point(moving)
-			, velocity(0.0f, 0.0f)
-			, acceleration(0.0f, 0.0f)
 			, direction((moving - attach).getNormalized())
+			, moving_point(moving)
 			, length((moving - attach).getLength())
 			, delta_angle(0.0f)
 			, last_angle(direction.getAngle())
@@ -33,45 +30,31 @@ namespace v2
 		void translate(const Vec2& v)
 		{
 			attach_point += v;
-			moving_point += v;
-		}
-
-		void applyConstraint()
-		{
-			const Vec2 dir_vec = direction.getNormal();
-			velocity = dir_vec * velocity.dot(dir_vec);
-		}
-
-		void correctShift()
-		{
-			moving_point = attach_point + direction * length;
-		}
-
-		void updateDirection()
-		{
-			direction = (moving_point - attach_point).getNormalized();
+			moving_point.position += v;
+			moving_point.old_position += v;
 		}
 
 		void updateDeltaAngle()
 		{
-			const float new_angle = direction.getAngle();
+			const float new_angle = (moving_point.position - attach_point).getAngle();
 			delta_angle = new_angle - last_angle;
 			last_angle = new_angle;
 		}
 
-		void update(float dt)
+		void solveAttach()
 		{
-			acceleration -= velocity * 0.5f;
-			velocity += acceleration * dt;
-			applyConstraint();
-			moving_point += velocity * dt;
-			acceleration = Vec2();
-			// Post update computations
-			updateDirection();
-			correctShift();
-			updateDeltaAngle();
+			const Vec2 delta = moving_point.position - attach_point;
+			const float dist_delta = length - delta.getLength();
+			moving_point.move(delta.getNormalized() * dist_delta);
 		}
 
+		void update(float dt)
+		{
+			moving_point.acceleration += direction;
+			solveAttach();
+			moving_point.update(dt);
+			updateDeltaAngle();
+		}
 	};
 
 	struct Node
@@ -137,7 +120,6 @@ namespace v2
 		// Physics
 		PhysicSegment segment;
 		Vec2 target_direction;
-		float joint_strength;
 
 		Branch()
 			: level(0)
@@ -146,13 +128,10 @@ namespace v2
 		Branch(const Node& node, uint32_t lvl)
 			: nodes{node}
 			, level(lvl)
-			, joint_strength(40000.0f * std::pow(0.7f, level))
 		{}
 
 		void update(float dt)
 		{
-			const Vec2 target_acceleration = target_direction * joint_strength;
-			segment.acceleration += target_acceleration;
 			segment.update(dt);
 		}
 
@@ -179,7 +158,8 @@ namespace v2
 		void initializePhysics()
 		{
 			segment = PhysicSegment(nodes.front().position, nodes.back().position);
-			target_direction = segment.direction;
+			const float joint_strength(1000.0f * std::pow(0.8f, level));
+			segment.direction = segment.direction * joint_strength;
 		}
 	};
 
@@ -214,6 +194,9 @@ namespace v2
 			const Vec2 origin = b.nodes.front().position;
 			for (Node& n : b.nodes) {
 				n.position.rotate(origin, mat);
+				if (n.branch_id) {
+					branches[n.branch_id].rotateTargetDir(mat);
+				}
 			}
 		}
 
