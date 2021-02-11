@@ -14,7 +14,11 @@ namespace v2
 		float delta_angle;
 		float last_angle;
 
-		PhysicSegment() = default;
+		PhysicSegment()
+			: length(0.0f)
+			, delta_angle(0.0f)
+			, last_angle(0.0f)
+		{}
 
 		PhysicSegment(Vec2 attach, Vec2 moving)
 			: attach_point(attach)
@@ -44,8 +48,10 @@ namespace v2
 		void solveAttach()
 		{
 			const Vec2 delta = moving_point.position - attach_point;
-			const float dist_delta = length - delta.getLength();
-			moving_point.move(delta.getNormalized() * dist_delta);
+			const float dist = delta.getLength();
+			const float dist_delta = length - dist;
+			const float inv_dist = 1.0f / dist;
+			moving_point.move(Vec2(delta.x * inv_dist * dist_delta, delta.y * inv_dist * dist_delta));
 		}
 
 		void update(float dt)
@@ -105,12 +111,7 @@ namespace v2
 	{
 		uint32_t branch_id;
 		uint32_t node_id;
-	};
-
-	struct Leaf
-	{
-		PhysicSegment segment;
-		NodeRef attact;
+		Vec2 position;
 	};
 
 	struct Branch
@@ -119,7 +120,6 @@ namespace v2
 		uint32_t level;
 		// Physics
 		PhysicSegment segment;
-		Vec2 target_direction;
 
 		Branch()
 			: level(0)
@@ -150,16 +150,98 @@ namespace v2
 			}
 		}
 
-		void rotateTargetDir(const RotMat2& mat)
-		{
-			target_direction.rotate(mat);
-		}
-
 		void initializePhysics()
 		{
 			segment = PhysicSegment(nodes.front().position, nodes.back().position);
-			const float joint_strength(1000.0f * std::pow(0.8f, level));
+			const float joint_strength(2000.0f * std::pow(0.5f, level));
 			segment.direction = segment.direction * joint_strength;
+		}
+	};
+
+	struct Leaf
+	{
+		NodeRef attach;
+
+		Particule free_particule;
+		Particule broken_part;
+
+		Vec2 target_direction;
+		Vec2 acceleration;
+		float joint_strenght;
+
+		sf::Color color;
+		float cut_threshold;
+		float size;
+
+		Leaf(NodeRef anchor, const Vec2& position, const Vec2& dir)
+			: attach(anchor)
+			, free_particule(position + dir)
+			, target_direction(dir)
+			, joint_strenght(RNGf::getRange(1.0f, 2.0f))
+			, cut_threshold(0.4f + RNGf::getUnder(1.0f))
+			, size(1.0f)
+		{
+			color = sf::Color::Black;// sf::Color(255, static_cast<uint8_t>(168 + RNGf::getRange(80.0f)), 0);
+		}
+
+		void solveAttach()
+		{
+			const float length = 1.0f;
+			const Vec2 delta = free_particule.position - attach.position;
+			const float dist_delta = 1.0f - delta.getLength();
+			/*if (std::abs(dist_delta) > cut_threshold) {
+				cut();
+			}*/
+
+			free_particule.move(delta.getNormalized() * dist_delta);
+		}
+
+		void solveLink()
+		{
+			const float length = 1.0f;
+			const Vec2 delta = free_particule.position - broken_part.position;
+			const float dist_delta = 1.0f - delta.getLength();
+			free_particule.move(delta.getNormalized() * (0.5f * dist_delta));
+			broken_part.move(delta.getNormalized() * (-0.5f * dist_delta));
+		}
+
+		Vec2 getDir() const
+		{
+			return free_particule.position - attach.position;
+		}
+
+		Vec2 getPosition() const
+		{
+			return attach.position;
+		}
+
+		void translate(const Vec2& delta)
+		{
+			free_particule.position += delta;
+			free_particule.old_position += delta;
+		}
+
+		/*void cut()
+		{
+			broken_part = Particule(attach->pos);
+			attach = nullptr;
+			target_direction = Vec2(0.0f, 1.0f);
+		}*/
+
+		void applyWind(const Wind& wind)
+		{
+			const float ratio = 1.0f;
+			const float wind_force = wind.strength * (wind.speed ? ratio : 1.0f);
+			free_particule.acceleration += Vec2(1.0f, RNGf::getRange(2.0f)) * wind_force;
+		}
+
+		void update(float dt)
+		{
+			solveAttach();
+			free_particule.update(dt);
+			free_particule.acceleration = target_direction * joint_strenght;
+			broken_part.update(dt);
+			broken_part.acceleration = target_direction * joint_strenght;
 		}
 	};
 
@@ -167,8 +249,7 @@ namespace v2
 	{
 		std::vector<Branch> branches;
 
-		Tree()
-		{}
+		Tree() = default;
 
 		void update(float dt)
 		{
@@ -194,9 +275,6 @@ namespace v2
 			const Vec2 origin = b.nodes.front().position;
 			for (Node& n : b.nodes) {
 				n.position.rotate(origin, mat);
-				if (n.branch_id) {
-					branches[n.branch_id].rotateTargetDir(mat);
-				}
 			}
 		}
 

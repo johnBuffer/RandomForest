@@ -62,10 +62,7 @@ int main()
 	}
 
 	std::vector<sf::VertexArray> branches_va;
-	v2::Tree tree_fast = v2::TreeBuilder::build(Vec2(WinWidth * 0.25f, WinHeight), tree_conf);
-
-	Tree tree(Vec2(WinWidth * 0.75f, WinHeight));
-	TreeBuilder::fullGrow(tree, tree_conf);
+	v2::Tree tree_fast = v2::TreeBuilder::build(Vec2(WinWidth * 0.5f, WinHeight), tree_conf);
 
 	LayerRenderer renderer(window);
 
@@ -73,20 +70,20 @@ int main()
 	float max_wind_force = 30.0f;
 	float current_wind_force = 0.0f;
 
-	const float wind_force = 10.0f;
+	const float wind_force = 1.0f;
 	std::vector<Wind> wind{
 		Wind(2.0f * layer_conf.width, base_wind_force * wind_force, 0.0f, layer_conf.width),
 		Wind(100.0f, 3.f * wind_force, 150.0f),
 		Wind(300.0f, 2.f * wind_force, 250.0f),
 		Wind(85.0f, 3.f * wind_force, 108.0f),
-		Wind(500.0f, 8.f * wind_force, 400.0f),
+		Wind(500.0f, 4.f * wind_force, 400.0f),
 	};
 
 	const float dt = 0.016f;
 
 	float time_sum_1 = 0.0f;
 	float time_sum_2 = 0.0f;
-	float img_count = 0.0f;
+	float img_count = 1.0f;
 
 	bool boosting = false;
 
@@ -101,8 +98,7 @@ int main()
 				window.close();
 			} else if (event.type == sf::Event::KeyReleased) {
 				if (event.key.code == sf::Keyboard::Space) {
-					tree_fast = v2::TreeBuilder::build(Vec2(WinWidth * 0.25f, WinHeight), tree_conf);
-					TreeBuilder::fullGrow(tree, tree_conf);
+					tree_fast = v2::TreeBuilder::build(Vec2(WinWidth * 0.5f, WinHeight), tree_conf);
 				}
 				else {
 					boosting = false;
@@ -147,12 +143,6 @@ int main()
 					b.segment.moving_point.acceleration += Vec2(1.0f, 0.0f) * w.strength;
 				}
 			}
-
-			for (PinnedSegment& s : tree.segments) {
-				if (w.isOver(s.particule.position)) {
-					s.particule.acceleration += Vec2(1.0f, 0.0f) * w.strength;
-				}
-			}
 		}
 
 		if (boosting) {
@@ -161,27 +151,16 @@ int main()
 			}
 		}
 
-		sf::Clock tree_clock;
-		tree.update(dt, wind);
-		const float elapsed = tree_clock.getElapsedTime().asMicroseconds();
-		time_sum_1 += elapsed;
-		std::cout << "Tree update: " << time_sum_1 / (img_count + 1.0f) << "us" << std::endl;
-
 		sf::Clock tree_2_clock;
 		tree_fast.update(dt);
 		const float elapsed_2 = tree_2_clock.getElapsedTime().asMicroseconds();
 		time_sum_2 += elapsed_2;
-		std::cout << "Tree 2 update: " << time_sum_2 / (img_count + 1.0f) << "us" << std::endl;
+		//std::cout << "Tree 2 update: " << time_sum_2 / img_count << "us" << std::endl;
 
 		window.clear(sf::Color::Black);
 
 		TreeRenderer::generateRenderData(tree_fast, branches_va);
-		for (auto& va : branches_va) {
-			window.draw(va);
-		}
-
-		TreeRenderer::generateRenderData(tree, branches_va);
-		for (auto& va : branches_va) {
+		for (const auto& va : branches_va) {
 			window.draw(va);
 		}
 
