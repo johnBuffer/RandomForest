@@ -61,8 +61,8 @@ public:
 		leaves_va.resize(4 * tree.leaves.size());
 		for (const v2::Leaf& l : tree.leaves) {
 			const Vec2 leaf_dir = l.getDir().getNormalized();
-			const Vec2 dir = leaf_dir * leaf_length;
-			const Vec2 nrm = leaf_dir.getNormal() * (0.5f * leaf_width);
+			const Vec2 dir = leaf_dir * leaf_length * l.size;
+			const Vec2 nrm = leaf_dir.getNormal() * (0.5f * leaf_width* l.size);
 			const Vec2 attach = l.getPosition();
 			const Vec2 pt1 = attach + nrm;
 			const Vec2 pt2 = attach + nrm + dir;

@@ -12,8 +12,7 @@ namespace v2
 		bool split;
 		Node node;
 		uint32_t level;
-		uint32_t parent_node;
-		uint32_t parent_branch;
+		NodeRef root;
 
 		GrowthResult()
 			: split(false)
@@ -55,8 +54,9 @@ namespace v2
 					if (RNGf::rng(0.5f)) {
 						split_angle = -split_angle;
 					}
-					result.parent_node = new_node.index;
+					result.root.node_id = index;
 					result.node.position = start;
+					result.node.last_position = start;
 					result.node.direction = Vec2::getRotated(direction, split_angle);
 					result.node.length = new_length * conf.branch_length_ratio;
 					result.node.width = new_width * conf.split_width_ratio;
@@ -81,13 +81,13 @@ namespace v2
 				GrowthResult res = TreeBuilder::grow(b, conf);
 				if (res.split) {
 					to_add.emplace_back(res);
-					to_add.back().parent_branch = i;
+					to_add.back().root.branch_id = i;
 				}
 				++i;
 			}
 
 			for (const GrowthResult& res : to_add) {
-				tree.branches[res.parent_branch].nodes[res.parent_node].branch_id = tree.branches.size();
+				tree.branches[res.root.branch_id].nodes[res.root.node_id].branch_id = tree.branches.size();
 				tree.branches.emplace_back(res.node, res.level);
 			}
 		}

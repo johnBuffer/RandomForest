@@ -74,7 +74,9 @@ namespace v2
 		uint32_t branch_id;
 
 		Node()
-			: index(0)
+			: position()
+			, last_position()
+			, index(0)
 			, width(1.0f)
 			, branch_id(0)
 		{}
@@ -268,9 +270,9 @@ namespace v2
 		void update(float dt)
 		{
 			// Branch physics
-			for (Branch& b : branches) {
+			/*for (Branch& b : branches) {
 				b.update(dt);
-			}
+			}*/
 			// Leaves physics
 			for (Leaf& l : leaves) {
 				l.update(dt);
@@ -317,6 +319,9 @@ namespace v2
 		{
 			for (Leaf& l : leaves) {
 				const Vec2 delta = getNode(l.attach).getDelta();
+				if (delta.x > 100.0f) {
+					std::cout << l.attach.branch_id << " " << l.attach.node_id << std::endl;
+				}
 				l.translate(delta);
 			}
 		}
@@ -341,14 +346,18 @@ namespace v2
 		{
 			uint32_t branch_id = 0;
 			for (const Branch& b : branches) {
-				const uint64_t nodes_count = b.nodes.size();
-				const uint64_t leafs_count = 2;
-				for (uint64_t i(0); i < std::min(leafs_count, nodes_count); ++i) {
-					const uint32_t node_id = nodes_count - 1 - i;
+				const uint64_t nodes_count = b.nodes.size() - 1;
+				const uint64_t leafs_count = 10;
+				int32_t node_id = nodes_count;
+				for (uint64_t i(0); i < leafs_count; ++i) {
+					node_id -= i;
+					if (node_id < 0) {
+						break;
+					}
 					const float angle = RNGf::getRange(2.0f * PI);
 					const NodeRef anchor(branch_id, node_id, b.nodes[node_id].position);
 					leaves.emplace_back(anchor, Vec2(cos(angle), sin(angle)));
-					leaves.back().size = 1.0f + (2.0f * i / float(leafs_count));
+					leaves.back().size = 1.0f + (0.5f * i / float(leafs_count));
 				}
 				++branch_id;
 			}
