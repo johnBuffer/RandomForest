@@ -28,7 +28,6 @@ namespace v2
 			, delta_angle(0.0f)
 			, last_angle(direction.getAngle())
 		{
-
 		}
 
 		void translate(const Vec2& v)
@@ -71,7 +70,6 @@ namespace v2
 		uint32_t index;
 		float length;
 		float width;
-
 		// Connected branch
 		uint32_t branch_id;
 
@@ -112,6 +110,20 @@ namespace v2
 		uint32_t branch_id;
 		uint32_t node_id;
 		Vec2 position;
+
+		NodeRef()
+			: branch_id(0)
+			, node_id(0)
+			, position()
+		{
+		}
+
+		NodeRef(uint32_t branch, uint32_t node, Vec2 pos)
+			: branch_id(branch)
+			, node_id(node)
+			, position(pos)
+		{
+		}
 	};
 
 	struct Branch
@@ -153,7 +165,7 @@ namespace v2
 		void initializePhysics()
 		{
 			segment = PhysicSegment(nodes.front().position, nodes.back().position);
-			const float joint_strength(2000.0f * std::pow(0.5f, level));
+			const float joint_strength(1000.0f * std::pow(0.5f, level));
 			segment.direction = segment.direction * joint_strength;
 		}
 	};
@@ -173,15 +185,15 @@ namespace v2
 		float cut_threshold;
 		float size;
 
-		Leaf(NodeRef anchor, const Vec2& position, const Vec2& dir)
+		Leaf(NodeRef anchor, const Vec2& dir)
 			: attach(anchor)
-			, free_particule(position + dir)
+			, free_particule(anchor.position + dir)
 			, target_direction(dir)
 			, joint_strenght(RNGf::getRange(1.0f, 2.0f))
 			, cut_threshold(0.4f + RNGf::getUnder(1.0f))
 			, size(1.0f)
 		{
-			color = sf::Color::Black;// sf::Color(255, static_cast<uint8_t>(168 + RNGf::getRange(80.0f)), 0);
+			color = sf::Color(255, static_cast<uint8_t>(168 + RNGf::getRange(80.0f)), 0);
 		}
 
 		void solveAttach()
@@ -217,6 +229,7 @@ namespace v2
 
 		void translate(const Vec2& delta)
 		{
+			attach.position += delta;
 			free_particule.position += delta;
 			free_particule.old_position += delta;
 		}
@@ -248,14 +261,19 @@ namespace v2
 	struct Tree
 	{
 		std::vector<Branch> branches;
+		std::vector<Leaf> leaves;
 
 		Tree() = default;
 
 		void update(float dt)
 		{
-			// Physics
+			// Branch physics
 			for (Branch& b : branches) {
 				b.update(dt);
+			}
+			// Leaves physics
+			for (Leaf& l : leaves) {
+				l.update(dt);
 			}
 			// Apply resulting rotations
 			for (Branch& b : branches) {
@@ -263,6 +281,7 @@ namespace v2
 			}
 			// Apply resulting translations
 			translateBranch(branches.front(), Vec2());
+			translateLeaves();
 			// Finalize update
 			for (Branch& b : branches) {
 				b.finalizeUpdate();
@@ -289,6 +308,19 @@ namespace v2
 			}
 		}
 
+		Node& getNode(const NodeRef& ref)
+		{
+			return branches[ref.branch_id].nodes[ref.node_id];
+		}
+
+		void translateLeaves()
+		{
+			for (Leaf& l : leaves) {
+				const Vec2 delta = getNode(l.attach).getDelta();
+				l.translate(delta);
+			}
+		}
+
 		uint64_t getNodesCount() const
 		{
 			uint64_t res = 0;
@@ -302,6 +334,23 @@ namespace v2
 		{
 			for (Branch& b : branches) {
 				b.initializePhysics();
+			}
+		}
+
+		void addLeaves()
+		{
+			uint32_t branch_id = 0;
+			for (const Branch& b : branches) {
+				const uint64_t nodes_count = b.nodes.size();
+				const uint64_t leafs_count = 2;
+				for (uint64_t i(0); i < std::min(leafs_count, nodes_count); ++i) {
+					const uint32_t node_id = nodes_count - 1 - i;
+					const float angle = RNGf::getRange(2.0f * PI);
+					const NodeRef anchor(branch_id, node_id, b.nodes[node_id].position);
+					leaves.emplace_back(anchor, Vec2(cos(angle), sin(angle)));
+					leaves.back().size = 1.0f + (2.0f * i / float(leafs_count));
+				}
+				++branch_id;
 			}
 		}
 	};

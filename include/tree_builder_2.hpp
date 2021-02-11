@@ -110,7 +110,7 @@ namespace v2
 			}
 			// Add physic and leaves
 			tree.generateSkeleton();
-			/*tree.addLeaves();*/
+			tree.addLeaves();
 
 			return tree;
 		}

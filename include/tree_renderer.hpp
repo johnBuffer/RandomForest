@@ -38,7 +38,7 @@ public:
 		}
 	}
 
-	static void generateRenderData(const v2::Tree& tree, std::vector<sf::VertexArray>& branches_va/*, sf::VertexArray& leaves_va*/)
+	static void generateRenderData(const v2::Tree& tree, std::vector<sf::VertexArray>& branches_va, sf::VertexArray& leaves_va)
 	{
 		// Create branches
 		branches_va.clear();
@@ -55,36 +55,36 @@ public:
 			}
 		}
 
-		//uint64_t i(0);
-		//const float leaf_length = 30.0f;
-		//const float leaf_width = 30.0f;
-		//leaves_va.resize(4 * tree.leaves.size());
-		//for (const Leaf& l : tree.leaves) {
-		//	const Vec2 leaf_dir = l.getDir().getNormalized();
-		//	const Vec2 dir = leaf_dir * leaf_length;
-		//	const Vec2 nrm = leaf_dir.getNormal() * (0.5f * leaf_width);
-		//	const Vec2 attach = l.getPosition();
-		//	const Vec2 pt1 = attach + nrm;
-		//	const Vec2 pt2 = attach + nrm + dir;
-		//	const Vec2 pt3 = attach - nrm + dir;
-		//	const Vec2 pt4 = attach - nrm;
-		//	// Geometry
-		//	leaves_va[4 * i + 0].position = sf::Vector2f(pt1.x, pt1.y);
-		//	leaves_va[4 * i + 1].position = sf::Vector2f(pt2.x, pt2.y);
-		//	leaves_va[4 * i + 2].position = sf::Vector2f(pt3.x, pt3.y);
-		//	leaves_va[4 * i + 3].position = sf::Vector2f(pt4.x, pt4.y);
-		//	// Texture
-		//	leaves_va[4 * i + 0].texCoords = sf::Vector2f(0.0f, 0.0f);
-		//	leaves_va[4 * i + 1].texCoords = sf::Vector2f(1024.0f, 0.0f);
-		//	leaves_va[4 * i + 2].texCoords = sf::Vector2f(1024.0f, 1024.0f);
-		//	leaves_va[4 * i + 3].texCoords = sf::Vector2f(0.0f, 1024.0f);
-		//	// Color
-		//	leaves_va[4 * i + 0].color = l.color;
-		//	leaves_va[4 * i + 1].color = l.color;
-		//	leaves_va[4 * i + 2].color = l.color;
-		//	leaves_va[4 * i + 3].color = l.color;
+		uint64_t i(0);
+		const float leaf_length = 30.0f;
+		const float leaf_width = 30.0f;
+		leaves_va.resize(4 * tree.leaves.size());
+		for (const v2::Leaf& l : tree.leaves) {
+			const Vec2 leaf_dir = l.getDir().getNormalized();
+			const Vec2 dir = leaf_dir * leaf_length;
+			const Vec2 nrm = leaf_dir.getNormal() * (0.5f * leaf_width);
+			const Vec2 attach = l.getPosition();
+			const Vec2 pt1 = attach + nrm;
+			const Vec2 pt2 = attach + nrm + dir;
+			const Vec2 pt3 = attach - nrm + dir;
+			const Vec2 pt4 = attach - nrm;
+			// Geometry
+			leaves_va[4 * i + 0].position = sf::Vector2f(pt1.x, pt1.y);
+			leaves_va[4 * i + 1].position = sf::Vector2f(pt2.x, pt2.y);
+			leaves_va[4 * i + 2].position = sf::Vector2f(pt3.x, pt3.y);
+			leaves_va[4 * i + 3].position = sf::Vector2f(pt4.x, pt4.y);
+			// Texture
+			leaves_va[4 * i + 0].texCoords = sf::Vector2f(0.0f, 0.0f);
+			leaves_va[4 * i + 1].texCoords = sf::Vector2f(1024.0f, 0.0f);
+			leaves_va[4 * i + 2].texCoords = sf::Vector2f(1024.0f, 1024.0f);
+			leaves_va[4 * i + 3].texCoords = sf::Vector2f(0.0f, 1024.0f);
+			// Color
+			leaves_va[4 * i + 0].color = l.color;
+			leaves_va[4 * i + 1].color = l.color;
+			leaves_va[4 * i + 2].color = l.color;
+			leaves_va[4 * i + 3].color = l.color;
 
-		//	++i;
-		//}
+			++i;
+		}
 	}
 };

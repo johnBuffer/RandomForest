@@ -33,7 +33,7 @@ int main()
 		50.0f, // branch_width
 		0.95f, // branch_width_ratio
 		0.75f, // split_width_ratio
-		0.5f, // deviation
+		0.95f, // deviation
 		PI * 0.25f, // split angle
 		0.1f, // branch_split_var;
 		20.0f, // branch_length;
@@ -41,7 +41,7 @@ int main()
 		0.5f, // branch_split_proba;
 		0.0f, // double split
 		Vec2(0.0f, -0.5f), // Attraction
-		8
+		1
 	};
 
 	LayerConf layer_conf{
@@ -51,6 +51,9 @@ int main()
 		1200.0f,
 		tree_conf
 	};
+
+	sf::Texture texture;
+	texture.loadFromFile("../res/leaf.png");
 
 	const uint32_t layers_count = 12;
 	int32_t current_last = 0;
@@ -62,6 +65,7 @@ int main()
 	}
 
 	std::vector<sf::VertexArray> branches_va;
+	sf::VertexArray leaves_va(sf::Quads);
 	v2::Tree tree_fast = v2::TreeBuilder::build(Vec2(WinWidth * 0.5f, WinHeight), tree_conf);
 
 	LayerRenderer renderer(window);
@@ -143,6 +147,12 @@ int main()
 					b.segment.moving_point.acceleration += Vec2(1.0f, 0.0f) * w.strength;
 				}
 			}
+
+			for (v2::Leaf& l : tree_fast.leaves) {
+				if (w.isOver(l.free_particule.position)) {
+					l.free_particule.acceleration += Vec2(1.0f, 0.0f) * w.strength;
+				}
+			}
 		}
 
 		if (boosting) {
@@ -159,10 +169,13 @@ int main()
 
 		window.clear(sf::Color::Black);
 
-		TreeRenderer::generateRenderData(tree_fast, branches_va);
+		TreeRenderer::generateRenderData(tree_fast, branches_va, leaves_va);
 		for (const auto& va : branches_va) {
 			window.draw(va);
 		}
+		sf::RenderStates states;
+		states.texture = &texture;
+		window.draw(leaves_va, states);
 
 		/*sf::VertexArray va_debug(sf::Lines, 2 * tree.branches.size());
 		uint32_t i = 0;
