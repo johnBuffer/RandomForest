@@ -3,6 +3,7 @@
 #include "vec2.hpp"
 #include <cmath>
 #include <iostream>
+#include <sstream>
 
 
 const float PI = 3.141592653f;
@@ -33,6 +34,18 @@ float getRandUnder(float max)
 	constexpr float div = 1.0f / float(max_value);
 	const float val = (rand() % max_value) * div * max;
 	return val;
+}
+
+
+std::string toString(float f, bool truncate = false)
+{
+	std::stringstream sx;
+	sx << f;
+
+	if (truncate) {
+		return sx.str().substr(0, 4);
+	}
+	return sx.str();
 }
 
 

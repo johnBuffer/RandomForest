@@ -1,6 +1,8 @@
 #pragma once
 #include "vec2.hpp"
 #include "pinned_segment.hpp"
+#include "wind.hpp"
+#include "utils.hpp"
 
 
 namespace v2
@@ -167,7 +169,7 @@ namespace v2
 		void initializePhysics()
 		{
 			segment = PhysicSegment(nodes.front().position, nodes.back().position);
-			const float joint_strength(1000.0f * std::pow(0.5f, level));
+			const float joint_strength(4000.0f * std::pow(0.4f, level));
 			segment.direction = segment.direction * joint_strength;
 		}
 	};
@@ -191,7 +193,7 @@ namespace v2
 			: attach(anchor)
 			, free_particule(anchor.position + dir)
 			, target_direction(dir)
-			, joint_strenght(RNGf::getRange(1.0f, 2.0f))
+			, joint_strenght(RNGf::getRange(1.0f, 4.0f))
 			, cut_threshold(0.4f + RNGf::getUnder(1.0f))
 			, size(1.0f)
 		{
@@ -267,17 +269,22 @@ namespace v2
 
 		Tree() = default;
 
-		void update(float dt)
+		void updateBranches(float dt)
 		{
-			// Branch physics
-			/*for (Branch& b : branches) {
+			for (Branch& b : branches) {
 				b.update(dt);
-			}*/
-			// Leaves physics
+			}
+		}
+
+		void updateLeaves(float dt)
+		{
 			for (Leaf& l : leaves) {
 				l.update(dt);
 			}
-			// Apply resulting rotations
+		}
+
+		void updateRest()
+		{
 			for (Branch& b : branches) {
 				rotateBranchTarget(b);
 			}
@@ -287,6 +294,29 @@ namespace v2
 			// Finalize update
 			for (Branch& b : branches) {
 				b.finalizeUpdate();
+			}
+		}
+
+		void update(float dt)
+		{
+			// Branch physics
+			updateBranches(dt);
+			// Leaves physics
+			updateLeaves(dt);
+			// Apply resulting transformations
+			updateRest();
+		}
+
+		void applyWind(const std::vector<Wind>& wind)
+		{
+			for (const Wind& w : wind) {
+				for (Leaf& l : leaves) {
+					w.apply(l.free_particule);
+				}
+
+				for (Branch& b : branches) {
+					w.apply(b.segment.moving_point);
+				}
 			}
 		}
 
@@ -319,9 +349,6 @@ namespace v2
 		{
 			for (Leaf& l : leaves) {
 				const Vec2 delta = getNode(l.attach).getDelta();
-				if (delta.x > 100.0f) {
-					std::cout << l.attach.branch_id << " " << l.attach.node_id << std::endl;
-				}
 				l.translate(delta);
 			}
 		}

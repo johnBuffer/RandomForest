@@ -4,14 +4,11 @@
 #include <iostream>
 #include <cmath>
 
-#include "tree.hpp"
 #include "tree_renderer.hpp"
-#include "tree_debug_renderer.hpp"
 #include "mouse_controller.hpp"
 #include "grass/grass.hpp"
 #include "gauge_bar.hpp"
-#include "layer.hpp"
-#include "tree_builder.hpp"
+#include "wind.hpp"
 
 #include "tree_2.hpp"
 #include "tree_builder_2.hpp"
@@ -19,56 +16,48 @@
 
 int main()
 {
-    constexpr uint32_t WinWidth = 1600;
-	constexpr uint32_t WinHeight = 900;
+    constexpr uint32_t WinWidth = 1920;
+	constexpr uint32_t WinHeight = 1080;
 
 	sf::ContextSettings settings;
 	settings.antialiasingLevel = 8;
 
-    sf::RenderWindow window(sf::VideoMode(WinWidth, WinHeight), "Tree", sf::Style::Default, settings);
+    sf::RenderWindow window(sf::VideoMode(WinWidth, WinHeight), "Tree", sf::Style::Fullscreen, settings);
 	window.setFramerateLimit(60);
 	//window.setVerticalSyncEnabled(false);
 
 	TreeConf tree_conf{
-		50.0f, // branch_width
+		80.0f, // branch_width
 		0.95f, // branch_width_ratio
 		0.75f, // split_width_ratio
-		0.95f, // deviation
+		0.5f, // deviation
 		PI * 0.25f, // split angle
 		0.1f, // branch_split_var;
-		20.0f, // branch_length;
-		0.97f, // branch_length_ratio;
+		40.0f, // branch_length;
+		0.96f, // branch_length_ratio;
 		0.5f, // branch_split_proba;
 		0.0f, // double split
 		Vec2(0.0f, -0.5f), // Attraction
-		1
-	};
-
-	LayerConf layer_conf{
-		2,
-		2500.0f,
-		1080.0f,
-		1200.0f,
-		tree_conf
+		8
 	};
 
 	sf::Texture texture;
 	texture.loadFromFile("../res/leaf.png");
 
-	const uint32_t layers_count = 12;
-	int32_t current_last = 0;
-	std::vector<Layer> layers;
-	const float layer_space = 2.0f;
-	for (uint32_t i(layers_count); i--;) {
-		layers.emplace_back(layer_conf, float(i) * layer_space);
-		layers.back().init();
-	}
+	sf::Font font;
+	font.loadFromFile("../res/font.ttf");
+	sf::Text text_profiler;
+	text_profiler.setFont(font);
+	text_profiler.setFillColor(sf::Color::White);
+	text_profiler.setCharacterSize(24);
+	float text_y = 10.0f;
+	text_profiler.setPosition(10.0f, text_y);
+
 
 	std::vector<sf::VertexArray> branches_va;
 	sf::VertexArray leaves_va(sf::Quads);
-	v2::Tree tree_fast = v2::TreeBuilder::build(Vec2(WinWidth * 0.5f, WinHeight), tree_conf);
+	v2::Tree tree = v2::TreeBuilder::build(Vec2(WinWidth * 0.5f, WinHeight), tree_conf);
 
-	LayerRenderer renderer(window);
 
 	float base_wind_force = 0.05f;
 	float max_wind_force = 30.0f;
@@ -76,20 +65,24 @@ int main()
 
 	const float wind_force = 1.0f;
 	std::vector<Wind> wind{
-		Wind(2.0f * layer_conf.width, base_wind_force * wind_force, 0.0f, layer_conf.width),
-		Wind(100.0f, 3.f * wind_force, 150.0f),
-		Wind(300.0f, 2.f * wind_force, 250.0f),
-		Wind(85.0f, 3.f * wind_force, 108.0f),
-		Wind(500.0f, 4.f * wind_force, 400.0f),
+		Wind(100.0f, 3.f * wind_force, 700.0f),
+		Wind(300.0f, 2.f * wind_force, 1050.0f),
+		Wind(400.0f, 3.f * wind_force, 1208.0f),
+		Wind(500.0f, 4.f * wind_force, 1400.0f),
 	};
 
 	const float dt = 0.016f;
 
-	float time_sum_1 = 0.0f;
-	float time_sum_2 = 0.0f;
+	float time_sum_leaves = 0.0f;
+	float time_sum_branches = 0.0f;
+	float time_sum_rest = 0.0f;
 	float img_count = 1.0f;
 
 	bool boosting = false;
+
+	bool draw_leaves = false;
+	bool draw_debug = false;
+	bool draw_wind_debug = false;
 
 	sf::Clock clock;
 	while (window.isOpen())
@@ -102,7 +95,16 @@ int main()
 				window.close();
 			} else if (event.type == sf::Event::KeyReleased) {
 				if (event.key.code == sf::Keyboard::Space) {
-					tree_fast = v2::TreeBuilder::build(Vec2(WinWidth * 0.5f, WinHeight), tree_conf);
+					tree = v2::TreeBuilder::build(Vec2(WinWidth * 0.5f, WinHeight), tree_conf);
+				}
+				else if (event.key.code == sf::Keyboard::L) {
+					draw_leaves = !draw_leaves;
+				}
+				else if (event.key.code == sf::Keyboard::D) {
+					draw_debug = !draw_debug;
+				}
+				else if (event.key.code == sf::Keyboard::W) {
+					draw_wind_debug = !draw_wind_debug;
 				}
 				else {
 					boosting = false;
@@ -140,66 +142,102 @@ int main()
 		}
 
 		for (Wind& w : wind) {
-			w.update(dt, layer_conf.width);
-
-			for (v2::Branch& b : tree_fast.branches) {
-				if (w.isOver(b.segment.moving_point.position)) {
-					b.segment.moving_point.acceleration += Vec2(1.0f, 0.0f) * w.strength;
-				}
-			}
-
-			for (v2::Leaf& l : tree_fast.leaves) {
-				if (w.isOver(l.free_particule.position)) {
-					l.free_particule.acceleration += Vec2(1.0f, 0.0f) * w.strength;
-				}
-			}
+			w.update(dt, WinWidth);
 		}
 
+		tree.applyWind(wind);
+
 		if (boosting) {
-			for (v2::Branch& b : tree_fast.branches) {
+			for (v2::Branch& b : tree.branches) {
 				b.segment.moving_point.acceleration += Vec2(1.0f, 0.0f) * wind_force;
 			}
 		}
 
-		sf::Clock tree_2_clock;
-		tree_fast.update(dt);
-		const float elapsed_2 = tree_2_clock.getElapsedTime().asMicroseconds();
-		time_sum_2 += elapsed_2;
-		//std::cout << "Tree 2 update: " << time_sum_2 / img_count << "us" << std::endl;
+		sf::Clock profiler_clock;
+		tree.updateBranches(dt);
+		const float elapsed_b = profiler_clock.getElapsedTime().asMicroseconds();
+		time_sum_branches += elapsed_b;
+
+		profiler_clock.restart();
+		tree.updateLeaves(dt);
+		const float elapsed_l = profiler_clock.getElapsedTime().asMicroseconds();
+		time_sum_leaves += elapsed_l;
+
+		profiler_clock.restart();
+		tree.updateRest();
+		const float elapsed_r = profiler_clock.getElapsedTime().asMicroseconds();
+		time_sum_rest += elapsed_r;
+
 
 		window.clear(sf::Color::Black);
 
-		TreeRenderer::generateRenderData(tree_fast, branches_va, leaves_va);
+		const float text_offset = 24.0f;
+		text_y = 10.0f;
+		text_profiler.setString("Structure simulation    " + toString(int(time_sum_branches / img_count)) + " µs");
+		text_profiler.setPosition(10.0f, text_y);
+		window.draw(text_profiler);
+		text_y += text_offset;
+
+		text_profiler.setString("Leaves simulation       " + toString(int(time_sum_leaves / img_count)) + " µs");
+		text_profiler.setPosition(10.0f, text_y);
+		window.draw(text_profiler);
+		text_y += text_offset;
+
+		text_profiler.setString("Structure update        " + toString(int(time_sum_rest / img_count)) + " µs");
+		text_profiler.setPosition(10.0f, text_y);
+		window.draw(text_profiler);
+		text_y += 2.0f * text_offset;
+
+		text_profiler.setString("Physic simulation time  " + toString(0.001f * ((time_sum_leaves + time_sum_branches + time_sum_rest) / img_count), true) + "ms");
+		text_profiler.setPosition(10.0f, text_y);
+		window.draw(text_profiler);
+
+		TreeRenderer::generateRenderData(tree, branches_va, leaves_va);
 		for (const auto& va : branches_va) {
 			window.draw(va);
 		}
-		sf::RenderStates states;
-		states.texture = &texture;
-		window.draw(leaves_va, states);
-
-		/*sf::VertexArray va_debug(sf::Lines, 2 * tree.branches.size());
-		uint32_t i = 0;
-		for (const v2::Branch& b : tree.branches) {
-			va_debug[2 * i + 0].position = sf::Vector2f(b.segment.attach_point.x, b.segment.attach_point.y);
-			va_debug[2 * i + 1].position = sf::Vector2f(b.segment.moving_point.x, b.segment.moving_point.y);
-			va_debug[2 * i + 0].color = sf::Color::Red;
-			va_debug[2 * i + 1].color = sf::Color::Red;
-			++i;
+		if (draw_leaves) {
+			sf::RenderStates states;
+			states.texture = &texture;
+			window.draw(leaves_va, states);
 		}
-		window.draw(va_debug);*/
 
-		/*i = 0;
-		for (const v2::Branch& b : tree.branches) {
-			const float length = b.joint_strength * 0.1f;
-			sf::Vector2f bot(b.nodes.back().position.x, b.nodes.back().position.y);
-			sf::Vector2f top(bot + length * sf::Vector2f(b.target_direction.x, b.target_direction.y));
-			va_debug[2 * i + 0].position = bot;
-			va_debug[2 * i + 1].position = top;
-			va_debug[2 * i + 0].color = sf::Color::Green;
-			va_debug[2 * i + 1].color = sf::Color::Green;
-			++i;
+		if (draw_debug) {
+			sf::VertexArray va_debug(sf::Lines, 2 * tree.branches.size());
+			uint32_t i = 0;
+			for (const v2::Branch& b : tree.branches) {
+				va_debug[2 * i + 0].position = sf::Vector2f(b.segment.attach_point.x, b.segment.attach_point.y);
+				va_debug[2 * i + 1].position = sf::Vector2f(b.segment.moving_point.position.x, b.segment.moving_point.position.y);
+				va_debug[2 * i + 0].color = sf::Color::Red;
+				va_debug[2 * i + 1].color = sf::Color::Red;
+				++i;
+			}
+			window.draw(va_debug);
+
+			i = 0;
+			for (const v2::Branch& b : tree.branches) {
+				const float joint_strength(4000.0f * std::pow(0.4f, b.level));
+				const float length = joint_strength * 0.03f;
+				sf::Vector2f bot(b.segment.moving_point.position.x, b.segment.moving_point.position.y);
+				const Vec2& dir = b.segment.direction.getNormalized();
+				sf::Vector2f top(bot + length * sf::Vector2f(dir.x, dir.y));
+				va_debug[2 * i + 0].position = bot;
+				va_debug[2 * i + 1].position = top;
+				va_debug[2 * i + 0].color = sf::Color::Green;
+				va_debug[2 * i + 1].color = sf::Color::Green;
+				++i;
+			}
+			window.draw(va_debug);
 		}
-		window.draw(va_debug);*/
+
+		if (draw_wind_debug) {
+			for (const Wind& w : wind) {
+				sf::RectangleShape wind_debug(sf::Vector2f(w.width, WinHeight));
+				wind_debug.setPosition(w.pos_x - w.width * 0.5f, 0.0f);
+				wind_debug.setFillColor(sf::Color(255, 0, 0, 100));
+				window.draw(wind_debug);
+			}
+		}
 
 		img_count += 1.0f;
 
