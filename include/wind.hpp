@@ -1,4 +1,6 @@
 #pragma once
+#include "pinned_segment.hpp"
+#include "number_generator.hpp"
 
 
 struct Wind
@@ -28,5 +30,12 @@ struct Wind
 	bool isOver(const Vec2& pos) const
 	{
 		return (pos.x > pos_x - width * 0.5f) && (pos.x < pos_x + width * 0.5f);
+	}
+
+	void apply(Particule& p) const
+	{
+		if (isOver(p.position)) {
+			p.applyForce(Vec2(1.0f, RNGf::getRange(1.0f)) * strength);
+		}
 	}
 };

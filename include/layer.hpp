@@ -3,6 +3,7 @@
 #include "grass/grass.hpp"
 #include "wind.hpp"
 #include "layer_render.hpp"
+#include "tree_builder.hpp"
 
 
 struct LayerConf
@@ -11,14 +12,14 @@ struct LayerConf
 	float width;
 	float height;
 	float gap;
-	TreeConf tree_conf;
+	v2::TreeConf tree_conf;
 };
 
 
 struct Layer
 {
 	// Trees
-	std::vector<Tree> trees;
+	std::vector<v2::Tree> trees;
 	// Grass
 	Solver solver;
 	std::vector<Grass> grass;
@@ -51,14 +52,13 @@ struct Layer
 				tree_pos.x += config.gap;
 			}
 
-			TreeConf conf = config.tree_conf;
+			v2::TreeConf conf = config.tree_conf;
 			const float size_var = RNGf::getRange(-20.0f, 20.0f);
 			conf.branch_length += size_var;
 			conf.branch_width += 2.0f * size_var;
 			conf.branch_deviation += -0.1f * std::min(size_var, 0.0f);
 
-			trees.push_back(Tree(tree_pos, conf));
-			trees.back().fullGrow();
+			trees.push_back(v2::TreeBuilder::build(tree_pos, conf));
 		}
 
 		for (float x(0.0f); x < config.width; x += 1.0f) {
@@ -85,9 +85,9 @@ struct Layer
 
 	void updateTrees(float dt, const std::vector<Wind>& wind)
 	{
-		for (Tree& t : trees) {
+		for (v2::Tree& t : trees) {
 			t.applyWind(wind);
-			t.update(dt, wind);
+			t.update(dt);
 		}
 	}
 

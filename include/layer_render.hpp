@@ -23,16 +23,16 @@ struct LayerRender
 	{
 	}
 
-	void init(const std::vector<Tree>& trees, const std::vector<Grass>& grass)
+	void init(const std::vector<v2::Tree>& trees, const std::vector<Grass>& grass)
 	{
 		// Init trees
 		uint64_t nodes_count = 0;
 		uint64_t leaves_count = 0;
-		for (const Tree& t : trees) {
+		for (const v2::Tree& t : trees) {
 			nodes_count += t.getNodesCount() - t.branches.size();
 			leaves_count += t.leaves.size();
 		}
-		branches_va.resize(4 * nodes_count);
+		branches_va.resize(4 * nodes_count - 2);
 		leaves_va.resize(4 * leaves_count);
 
 		// Init grass
@@ -46,38 +46,36 @@ struct LayerRender
 		grass_color = sf::Color::Black;// sf::Color(51 + RNGf::getRange(20.0f), 158 + RNGf::getRange(50.0f), 56 + RNGf::getRange(25.0f));
 	}
 
-	void render(std::vector<Tree>& trees, float opacity)
+	void render(std::vector<v2::Tree>& trees, float opacity)
 	{
 		const sf::Color color(0, 0, 0, static_cast<uint8_t>(255.0f * opacity));
-
 		// Branches
 		{
 			uint64_t global_offset(0);
-			for (const Tree& t : trees) {
-				for (const Branch& b : t.branches) {
+			for (const v2::Tree& t : trees) {
+				for (const v2::Branch& b : t.branches) {
 					const uint64_t nodes_count = b.nodes.size() - 1;
-					for (uint64_t i(0); i < nodes_count; ++i) {
-						// Current node
-						{
-							const Node& n = *(b.nodes[i]);
-							const float width = 0.5f * n.width;
-							const Vec2 n_vec = n.growth_direction.getNormal() * width;
-							branches_va[global_offset + 4 * i + 0].position = sf::Vector2f(n.pos.x + n_vec.x, n.pos.y + n_vec.y);
-							branches_va[global_offset + 4 * i + 1].position = sf::Vector2f(n.pos.x - n_vec.x, n.pos.y - n_vec.y);
+					// Retrieve nodes
+					const v2::Node& n0 = b.nodes[0];
+					const v2::Node* n1 = &b.nodes[1];
+					const float width = 0.5f * n0.width;
+					const float next_width = 0.5f * n1->width;
+					const Vec2 n_vec = (n1->position - n0.position).getNormalized().getNormal();
+					branches_va[global_offset + 0].position = sf::Vector2f(n0.position.x + n_vec.x * width, n0.position.y + n_vec.y * width);
+					branches_va[global_offset + 1].position = sf::Vector2f(n1->position.x + n_vec.x * next_width, n1->position.y + n_vec.y * next_width);
+					branches_va[global_offset + 2].position = sf::Vector2f(n1->position.x - n_vec.x * next_width, n1->position.y - n_vec.y * next_width);
+					branches_va[global_offset + 3].position = sf::Vector2f(n0.position.x - n_vec.x * width, n0.position.y - n_vec.y * width);
 
-							branches_va[global_offset + 4 * i + 0].color = color;
-							branches_va[global_offset + 4 * i + 1].color = color;
-						}
-						// Next node
-						{
-							const Node& n = *(b.nodes[i + 1]);
-							const float width = 0.5f * n.width;
-							const Vec2 n_vec = n.growth_direction.getNormal() * width;
-							branches_va[global_offset + 4 * i + 2].position = sf::Vector2f(n.pos.x - n_vec.x, n.pos.y - n_vec.y);
-							branches_va[global_offset + 4 * i + 3].position = sf::Vector2f(n.pos.x + n_vec.x, n.pos.y + n_vec.y);
-							branches_va[global_offset + 4 * i + 2].color = color;
-							branches_va[global_offset + 4 * i + 3].color = color;
-						}
+					for (uint64_t i(2); i < nodes_count; ++i) {
+						// Current node
+						const v2::Node& n2 = b.nodes[i + 1];
+						const float width = 0.5f * n1->width;
+						const float next_width = 0.5f * n2.width;
+						const Vec2 n_vec = (n2.position - n1->position).getNormalized().getNormal();
+						branches_va[global_offset + 4 * i + 0].position = sf::Vector2f(n1->position.x + n_vec.x * width, n1->position.y + n_vec.y * width);
+						branches_va[global_offset + 4 * i + 1].position = sf::Vector2f(n2.position.x + n_vec.x * next_width, n2.position.y + n_vec.y * next_width);
+						branches_va[global_offset + 4 * i + 2].position = sf::Vector2f(n2.position.x - n_vec.x * next_width, n2.position.y - n_vec.y * next_width);
+						branches_va[global_offset + 4 * i + 3].position = sf::Vector2f(n1->position.x - n_vec.x * width, n.position.y - n_vec.y * width);
 					}
 					global_offset += 4 * nodes_count;
 				}
@@ -86,10 +84,10 @@ struct LayerRender
 		// Leaves
 		{
 			uint64_t global_offset(0);
-			for (const Tree& t : trees) {
+			for (const v2::Tree& t : trees) {
 				uint64_t i(0);
 				const float leaf_size = 50.0f;
-				for (const Leaf& l : t.leaves) {
+				for (const v2::Leaf& l : t.leaves) {
 					const Vec2 leaf_dir = l.getDir().getNormalized();
 					const Vec2 dir = leaf_dir * (leaf_size * l.size);
 					const Vec2 nrm = leaf_dir.getNormal() * (0.5f * leaf_size * l.size);

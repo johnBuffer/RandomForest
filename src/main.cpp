@@ -5,12 +5,11 @@
 #include <cmath>
 
 #include "tree.hpp"
-#include "tree_renderer.hpp"
-#include "tree_debug_renderer.hpp"
 #include "mouse_controller.hpp"
 #include "grass/grass.hpp"
 #include "gauge_bar.hpp"
 #include "layer.hpp"
+#include "tree_builder.hpp"
 
 #include <swarm.hpp>
 
@@ -27,7 +26,7 @@ int main()
 	window.setFramerateLimit(60);
 	//window.setVerticalSyncEnabled(false);
 
-	TreeConf tree_conf{
+	v2::TreeConf tree_conf{
 		80.0f, // branch_width
 		0.95f, // branch_width_ratio
 		0.5f, // split_width_ratio
@@ -53,7 +52,7 @@ int main()
 	const uint32_t layers_count = 12;
 	int32_t current_last = 0;
 	std::vector<Layer> layers;
-	const float layer_space = 2.0f;
+	const float layer_space = 1.0f;
 	for (uint32_t i(layers_count); i--;) {
 		layers.emplace_back(layer_conf, float(i) * layer_space);
 		layers.back().init();

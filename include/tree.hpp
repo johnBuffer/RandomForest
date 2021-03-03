@@ -1,247 +1,346 @@
 #pragma once
-#include <vector>
-#include <vec2.hpp>
+#include "vec2.hpp"
+#include "pinned_segment.hpp"
+#include "wind.hpp"
 #include "utils.hpp"
 #include "number_generator.hpp"
-#include "wind.hpp"
-#include "leaf.hpp"
-#include "node.hpp"
-#include "pinned_segment.hpp"
 
 
-struct TreeConf
+namespace v2
 {
-	float branch_width;
-	float branch_width_ratio;
-	float split_width_ratio;
-	float branch_deviation;
-	float branch_split_angle;
-	float branch_split_var;
-	float branch_length;
-	float branch_length_ratio;
-	float branch_split_proba;
-	float double_split_proba;
-	Vec2 attraction;
-	uint32_t max_level;
-};
-
-
-struct GrowthResult
-{
-	bool split;
-	Node node;
-	Node::Ptr root;
-
-	GrowthResult()
-		: split(false)
-		, node()
-		, root(nullptr)
-	{}
-};
-
-
-struct Branch
-{
-	Node::Ptr root;
-	Vec2 last_root_pos;
-	std::vector<Node::Ptr> nodes;
-
-	Branch() = default;
-
-	Branch(Node::Ptr root_node, const Node& node)
-		: root(root_node)
-		, last_root_pos(root->pos)
-		, nodes{ Node::create(node) }
-	{}
-
-	Branch(Node::Ptr node, const Vec2& pos, float a, float l, float width)
-		: root(node)
-		, last_root_pos(root->pos)
-		, nodes{ Node::create(pos.x, pos.y, a, l, width, 1, 0) }
-	{}
-
-	GrowthResult grow(const TreeConf& conf)
+	struct PhysicSegment
 	{
-		GrowthResult result;
-		Node& current_node = *(nodes.back());
-		const uint32_t level = current_node.level;
-		const uint32_t index = current_node.index;
+		Vec2 attach_point;
+		Vec2 direction;
+		Particule moving_point;
+		float length;
+		float delta_angle;
+		float last_angle;
 
-		const float width = current_node.width;
-		const float width_threshold = 0.8f;
-		if (width > width_threshold) {
-			// Compute new start
-			const Vec2 start = current_node.getEnd();
-			// Compute new length
-			const float new_length = current_node.length * conf.branch_length_ratio;
-			const float new_width = current_node.width * conf.branch_width_ratio;
-			// Compute new direction
-			const float deviation = getRandRange(conf.branch_deviation);
-			Vec2 direction = current_node.growth_direction;
-			direction.rotate(deviation);
-			const float attraction_force = 1.0f / new_length;
-			direction = (direction + conf.attraction * attraction_force).getNormalized();
-			// Add new node
-			Node::Ptr new_node = Node::create(start, direction, new_length, new_width, level, index + 1);
-			nodes.push_back(new_node);
-			// Check for split
-			if (index && (index % 5 == 0) && level < conf.max_level) {
-				result.root = new_node;
-				result.split = true;
-				float split_angle = conf.branch_split_angle + getRandRange(conf.branch_split_var);
-				// Determine side
-				if (RNGf::rng(0.5f)) {
-					split_angle = -split_angle;
-				}
-				result.node.pos = start;
-				result.node.growth_direction = Vec2::getRotated(direction, split_angle);
-				result.node.length = new_length * conf.branch_length_ratio;
-				result.node.width = new_width * conf.split_width_ratio;
-				result.node.level = level + 1;
-				result.node.index = 0;
-				// Avoid single node branches
-				if (result.node.width < width_threshold) {
-					result.split = false;
-					new_node->width = 0.0f;
-				}
+		PhysicSegment()
+			: length(0.0f)
+			, delta_angle(0.0f)
+			, last_angle(0.0f)
+		{}
+
+		PhysicSegment(Vec2 attach, Vec2 moving)
+			: attach_point(attach)
+			, direction((moving - attach).getNormalized())
+			, moving_point(moving)
+			, length((moving - attach).getLength())
+			, delta_angle(0.0f)
+			, last_angle(direction.getAngle())
+		{
+		}
+
+		void translate(const Vec2& v)
+		{
+			attach_point += v;
+			moving_point.position += v;
+			moving_point.old_position += v;
+		}
+
+		void updateDeltaAngle()
+		{
+			const float new_angle = (moving_point.position - attach_point).getAngle();
+			delta_angle = new_angle - last_angle;
+			last_angle = new_angle;
+		}
+
+		void solveAttach()
+		{
+			const Vec2 delta = moving_point.position - attach_point;
+			const float dist = delta.getLength();
+			const float dist_delta = length - dist;
+			const float inv_dist = 1.0f / dist;
+			moving_point.move(Vec2(delta.x * inv_dist * dist_delta, delta.y * inv_dist * dist_delta));
+		}
+
+		void update(float dt)
+		{
+			solveAttach();
+			moving_point.acceleration += direction;
+			moving_point.update(dt);
+			updateDeltaAngle();
+		}
+	};
+
+	struct Node
+	{
+		Vec2 position;
+		float width;
+
+		Node()
+			: position()
+			, width(1.0f)
+		{}
+
+		Node(Vec2 pos, float w)
+			: position(pos)
+			, width(w)
+		{}
+
+		struct Ref
+		{
+			uint32_t branch_id;
+			uint32_t node_id;
+			Vec2 position;
+
+			Ref()
+				: branch_id(0)
+				, node_id(0)
+				, position()
+			{
+			}
+
+			Ref(uint32_t branch, uint32_t node, Vec2 pos = Vec2())
+				: branch_id(branch)
+				, node_id(node)
+				, position(pos)
+			{
+			}
+		};
+	};
+
+	struct Branch
+	{
+		std::vector<Node> nodes;
+		uint32_t level;
+		// Physics
+		PhysicSegment segment;
+		Node::Ref root;
+
+		Branch()
+			: level(0)
+		{}
+
+		Branch(const Node& node, uint32_t lvl, const Node::Ref& root_ref = Node::Ref())
+			: nodes{node}
+			, level(lvl)
+			, root(root_ref)
+		{}
+
+		void update(float dt)
+		{
+			segment.update(dt);
+		}
+
+		void translate(Vec2 v)
+		{
+			segment.translate(v);
+			for (Node& n : nodes) {
+				n.position += v;
 			}
 		}
 
-		return result;
-	}
+		void translateTo(Vec2 position)
+		{
+			const Vec2 delta = position - root.position;
+			root.position = position;
+			translate(delta);
+		}
 
-	void update()
+		void initializePhysics()
+		{
+			segment = PhysicSegment(nodes.front().position, nodes.back().position);
+			const float joint_strength(1000.0f * std::powf(0.7f, float(level)));
+			segment.direction = segment.direction * joint_strength;
+		}
+	};
+
+	struct Leaf
 	{
-		const Vec2 delta_pos = root->pos - last_root_pos;
-		for (Node::Ptr n : nodes) {
-			n->pos += delta_pos;
-		}
-		last_root_pos = root->pos;
-	}
-};
+		Node::Ref attach;
 
+		Particule free_particule;
+		Particule broken_part;
 
-struct Tree
-{
-	TreeConf conf;
+		Vec2 target_direction;
+		Vec2 acceleration;
 
-	Node::Ptr root;
-	std::vector<Branch> branches;
-	std::vector<Leaf> leaves;
-	std::vector<PinnedSegment> segments;
+		sf::Color color;
+		float cut_threshold;
+		float size;
 
-
-	Tree(const Vec2& pos, const TreeConf& tree_conf)
-		: conf(tree_conf)
-	{
-		float base_angle = -PI * 0.5f;
-		root = Node::create(pos);
-		branches.emplace_back(root, pos, base_angle, conf.branch_length, conf.branch_width);
-	}
-
-	uint64_t getNodesCount() const
-	{
-		uint64_t res = 0;
-		for (const Branch& b : branches) {
-			res += b.nodes.size();
-		}
-		return res;
-	}
-
-	void grow()
-	{
-		std::vector<GrowthResult> to_add;
-		for (Branch& b : branches) {
-			GrowthResult res = b.grow(conf);
-			if (res.split) {
-				to_add.emplace_back(res);
-			}
-		}
-
-		for (GrowthResult& res : to_add) {
-			branches.emplace_back(res.root, res.node);
-		}
-	}
-
-	void fullGrow()
-	{
-		uint64_t nodes_count = 0;
-		while (true) {
-			grow();
-			if (nodes_count == getNodesCount()) {
-				break;
-			}
-			nodes_count = getNodesCount();
-		}
-		createSkeleton();
-		addLeaves();
-	}
-
-	void createSkeleton()
-	{
-		uint64_t i(0);
-		for (Branch& b : branches) {
-			Vec2 free_point = b.nodes.back()->pos;
-			const float strength = 1000.0f * static_cast<float>(std::pow(0.1f, b.root->level));
-			segments.emplace_back(b.nodes.front(), free_point, i, strength);
-			++i;
-		}
-	}
-
-	void rotateBranch(Branch& branch, Vec2 attach, float angle)
-	{
-		for (Node::Ptr n : branch.nodes) {
-			n->pos.rotate(attach, angle);
-		}
-	}
-
-	void update(float dt, const std::vector<Wind>& wind)
-	{
-		for (PinnedSegment& p : segments) {
-			p.update(dt);
-		}
-
-		for (PinnedSegment& p : segments) {
-			rotateBranch(branches[p.branch_id], p.attach->pos, p.delta_angle);
-		}
-
-		// Follow root
-		for (Branch& b : branches) {
-			b.update();
-		}
-
-		for (Leaf& l : leaves) {
-			for (const Wind& w : wind) {
-				if (w.isOver(l.free_particule.position)) {
-					l.applyWind(w);
-				}
-			}
+		Leaf(Node::Ref anchor, const Vec2& dir)
+			: attach(anchor)
+			, free_particule(anchor.position + dir)
+			, target_direction(dir * RNGf::getRange(1.0f, 4.0f))
+			, cut_threshold(0.4f + RNGf::getUnder(1.0f))
+			, size(1.0f)
+		{
+			color = sf::Color(255, static_cast<uint8_t>(168 + RNGf::getRange(80.0f)), 0);
 			
-			l.update(dt);
 		}
-	}
 
-	void applyWind(const std::vector<Wind>& wind)
+		void solveAttach()
+		{
+			const float target_length = 1.0f;
+			Vec2 delta = free_particule.position - attach.position;
+			const float length = delta.normalize();
+			const float dist_delta = target_length - length;
+			/*if (std::abs(dist_delta) > cut_threshold) {
+				cut();
+			}*/
+
+			free_particule.move(delta * dist_delta);
+		}
+
+		void solveLink()
+		{
+			const float length = 1.0f;
+			const Vec2 delta = free_particule.position - broken_part.position;
+			const float dist_delta = 1.0f - delta.getLength();
+			free_particule.move(delta.getNormalized() * (0.5f * dist_delta));
+			broken_part.move(delta.getNormalized() * (-0.5f * dist_delta));
+		}
+
+		Vec2 getDir() const
+		{
+			return free_particule.position - attach.position;
+		}
+
+		Vec2 getPosition() const
+		{
+			return attach.position;
+		}
+
+		void moveTo(Vec2 position)
+		{
+			const Vec2 delta = position - attach.position;
+			attach.position = position;
+			free_particule.position += delta;
+			free_particule.old_position += delta;
+		}
+
+		/*void cut()
+		{
+			broken_part = Particule(attach->pos);
+			attach = nullptr;
+			target_direction = Vec2(0.0f, 1.0f);
+		}*/
+
+		void applyWind(const Wind& wind)
+		{
+			const float ratio = 1.0f;
+			const float wind_force = wind.strength * (wind.speed ? ratio : 1.0f);
+			free_particule.acceleration += Vec2(1.0f, RNGf::getRange(2.0f)) * wind_force;
+		}
+
+		void update(float dt)
+		{
+			solveAttach();
+			free_particule.update(dt);
+			// Reset acceleration
+			free_particule.acceleration = target_direction;
+			/*broken_part.update(dt);
+			broken_part.acceleration = target_direction * joint_strenght;*/
+		}
+	};
+
+	struct Tree
 	{
-		for (const Wind& w : wind) {
-			for (PinnedSegment& p : segments) {
-				if (w.isOver(p.particule.position)) {
-					p.particule.acceleration += Vec2(1.0f, RNGf::getRange(2.0f)) * w.strength;
+		std::vector<Branch> branches;
+		std::vector<Leaf> leaves;
+
+		Tree() = default;
+
+		void updateBranches(float dt)
+		{
+			for (Branch& b : branches) {
+				b.update(dt);
+			}
+		}
+
+		void updateLeaves(float dt)
+		{
+			for (Leaf& l : leaves) {
+				l.update(dt);
+			}
+		}
+
+		void updateStructure()
+		{
+			// Apply resulting translations
+			rotateBranches();
+			translateBranches();
+			translateLeaves();
+		}
+
+		void update(float dt)
+		{
+			// Branch physics
+			updateBranches(dt);
+			// Leaves physics
+			updateLeaves(dt);
+			// Apply resulting transformations
+			updateStructure();
+		}
+
+		void applyWind(const std::vector<Wind>& wind)
+		{
+			for (const Wind& w : wind) {
+				for (Leaf& l : leaves) {
+					w.apply(l.free_particule);
+				}
+
+				for (Branch& b : branches) {
+					w.apply(b.segment.moving_point);
 				}
 			}
 		}
-	}
 
-	void addLeaves()
-	{
-		for (Branch& b : branches) {
-			const uint64_t nodes_count = b.nodes.size();
-			const uint64_t leafs_count = 10;
-			for (uint64_t i(0); i < std::min(leafs_count, nodes_count); ++i) {
-				const float angle = RNGf::getRange(2.0f * PI);
-				leaves.push_back(Leaf(b.nodes[nodes_count - 1 - i], Vec2(cos(angle), sin(angle))));
-				leaves.back().size = 1.0f + (2.0f * i / float(leafs_count));
+		void rotateBranches()
+		{
+			for (Branch& b : branches) {
+				rotateBranchTarget(b);
 			}
 		}
-	}
-};
+
+		void rotateBranchTarget(Branch& b)
+		{
+			const RotMat2 mat(b.segment.delta_angle);
+			const Vec2 origin = b.nodes.front().position;
+			for (Node& n : b.nodes) {
+				n.position.rotate(origin, mat);
+			}
+		}
+
+		void translateBranches()
+		{
+			uint64_t branches_count = branches.size();
+			for (uint64_t i(1); i < branches_count; ++i) {
+				Branch& b = branches[i];
+				b.translateTo(getNode(b.root).position);
+			}
+		}
+
+		Node& getNode(const Node::Ref& ref)
+		{
+			return branches[ref.branch_id].nodes[ref.node_id];
+		}
+
+		void translateLeaves()
+		{
+			for (Leaf& l : leaves) {
+				l.moveTo(getNode(l.attach).position);
+			}
+		}
+
+		uint64_t getNodesCount() const
+		{
+			uint64_t res = 0;
+			for (const Branch& b : branches) {
+				res += b.nodes.size();
+			}
+			return res;
+		}
+
+		void generateSkeleton()
+		{
+			for (Branch& b : branches) {
+				b.initializePhysics();
+			}
+		}
+	};
+}
