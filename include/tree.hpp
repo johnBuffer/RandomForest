@@ -320,6 +320,11 @@ namespace v2
 			return branches[ref.branch_id].nodes[ref.node_id];
 		}
 
+		const Node& getNode(const Node::Ref& ref) const
+		{
+			return branches[ref.branch_id].nodes[ref.node_id];
+		}
+
 		void translateLeaves()
 		{
 			for (Leaf& l : leaves) {

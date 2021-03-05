@@ -22,7 +22,7 @@ int main()
 	sf::ContextSettings settings;
 	settings.antialiasingLevel = 8;
 
-    sf::RenderWindow window(sf::VideoMode(WinWidth, WinHeight), "Tree", sf::Style::Fullscreen, settings);
+    sf::RenderWindow window(sf::VideoMode(WinWidth, WinHeight), "Tree", sf::Style::Default, settings);
 	window.setFramerateLimit(60);
 	//window.setVerticalSyncEnabled(false);
 
@@ -49,10 +49,10 @@ int main()
 		tree_conf
 	};
 
-	const uint32_t layers_count = 12;
+	const uint32_t layers_count = 2;
 	int32_t current_last = 0;
 	std::vector<Layer> layers;
-	const float layer_space = 1.0f;
+	const float layer_space = 5.0f;
 	for (uint32_t i(layers_count); i--;) {
 		layers.emplace_back(layer_conf, float(i) * layer_space);
 		layers.back().init();
@@ -76,8 +76,6 @@ int main()
 	const float dt = 0.016f;
 
 	bool boosting = false;
-
-	swrm::Swarm swarm(layers_count);
 
 	sf::Clock clock;
 	while (window.isOpen())
@@ -136,25 +134,23 @@ int main()
 		for (Wind& w : wind) {
 			w.update(dt, layer_conf.width);
 		}
-		
-		swrm::WorkGroup group = swarm.execute([&](uint32_t id, uint32_t group_size) {
+
+		for (Layer& layer : layers) {
 			const float dist_threshold = 0.1f;
-			Layer& layer = layers[id];
 			if (layer.dist > dist_threshold) {
 				layer.update(dt, wind);
 				layer.generateRenderArrays(dist_threshold);
 			}
 			else {
-				layer.dist = group_size * layer_space;
+				layer.dist = layers_count * layer_space;
 				layer.back_to_end = true;
 				layer.init();
 			}
-		}, layers_count);
-		group.waitExecutionDone();
+		}
 
 		const float scroll_speed = 1.0f;
 		for (Layer& l : layers) {
-			l.dist -= scroll_speed * dt;
+			//l.dist -= scroll_speed * dt;
 			if (l.back_to_end) {
 				--current_last;
 				if (current_last < 0) {
@@ -196,9 +192,9 @@ int main()
 			renderer.render(l_side.render_data, states_right);
 
 			// Fake side id
-			renderer.renderGrass(l_side.render_data, states_left);
+			/*renderer.renderGrass(l_side.render_data, states_left);
 			renderer.renderGrass(l.render_data, states);
-			renderer.renderGrass(l_side.render_data, states_right);
+			renderer.renderGrass(l_side.render_data, states_right);*/
 
 			sf::VertexArray fade(sf::Quads, 4);
 			fade[0].position = sf::Vector2f(0.0f, 0.0f);
