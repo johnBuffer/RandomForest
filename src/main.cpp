@@ -21,9 +21,9 @@ int main()
 	constexpr uint32_t WinHeight = 1080;
 
 	sf::ContextSettings settings;
-	settings.antialiasingLevel = 8;
+	settings.antialiasingLevel = 4;
 
-    sf::RenderWindow window(sf::VideoMode(WinWidth, WinHeight), "Tree", sf::Style::Fullscreen, settings);
+    sf::RenderWindow window(sf::VideoMode(2*WinWidth, 2*WinHeight), "Tree", sf::Style::Fullscreen, settings);
 	window.setFramerateLimit(60);
 	//window.setVerticalSyncEnabled(false);
 
@@ -43,20 +43,20 @@ int main()
 	};
 
 	LayerConf layer_conf{
-		2,
+		8,
 		2500.0f,
 		1080.0f,
-		1200.0f,
+		1400.0f,
 		tree_conf
 	};
 
 	const uint32_t layers_count = 12;
 	int32_t current_last = 0;
 	std::vector<Layer> layers;
-	const float layer_space = 2.0f;
+	const float layer_space = 1.4f;
 	for (uint32_t i(layers_count); i--;) {
 		layers.emplace_back(layer_conf, float(i) * layer_space);
-		layers.back().init();
+		layers.back().init(true);
 	}
 
 	LayerRenderer renderer(window);
@@ -67,11 +67,12 @@ int main()
 
 	const float wind_force = 0.1f;
 	std::vector<Wind> wind{
-		Wind(2.0f * layer_conf.width, base_wind_force * wind_force, 0.0f, layer_conf.width),
+		Wind(10.0f * layer_conf.width, base_wind_force * wind_force, 0.0f, layer_conf.width),
 		Wind(1000.0f, 3.f * wind_force, 1500.0f),
-		Wind(300.0f, 2.f * wind_force, 250.0f),
-		Wind(850.0f, 3.f * wind_force, 1080.0f),
-		Wind(500.0f, 8.f * wind_force, 400.0f),
+		Wind(1600.0f, 2.f * wind_force, 950.0f),
+		Wind(1950.0f, 3.f * wind_force, 1080.0f),
+		Wind(1500.0f, 8.f * wind_force, 1200.0f),
+		Wind(2500.0f, 3.f * wind_force, 1400.0f),
 	};
 
 	const float dt = 0.016f;
@@ -80,7 +81,14 @@ int main()
 
 	swrm::Swarm swarm(layers_count);
 
+	const float tree_zone_factor = 3.0f;
+	const sf::Vector2f mid_window(float(WinWidth) * 0.5f, float(WinHeight) * 0.65f);
+	const sf::Vector2f mid_layer(layer_conf.width * 0.5f, layer_conf.height * 0.9f);
+	const float wind_start_x = mid_window.x - tree_zone_factor * mid_layer.x;
+	const float wind_end_x = mid_window.x + tree_zone_factor * mid_layer.x;
+
 	sf::Clock clock;
+	const float no_tree_time = 1.0f;
 	while (window.isOpen())
 	{
 		const sf::Vector2i mouse_pos = sf::Mouse::getPosition(window);
@@ -135,7 +143,7 @@ int main()
 		}
 
 		for (Wind& w : wind) {
-			w.update(dt, layer_conf.width);
+			w.update(dt, wind_start_x, wind_end_x);
 		}
 		
 		swrm::WorkGroup group = swarm.execute([&](uint32_t id, uint32_t group_size) {
@@ -148,7 +156,7 @@ int main()
 			else {
 				layer.dist = group_size * layer_space;
 				layer.back_to_end = true;
-				layer.init();
+				layer.init(clock.getElapsedTime().asSeconds() < no_tree_time);
 			}
 		}, layers_count);
 		group.waitExecutionDone();
@@ -167,8 +175,6 @@ int main()
 
 		window.clear(sf::Color::Black);
 
-		const sf::Vector2f mid_window(float(WinWidth) * 0.5f, float(WinHeight) * 0.65f);
-		const sf::Vector2f mid_layer(layer_conf.width * 0.5f, layer_conf.height * 0.9f);
 		const float max_depth = layers_count * layer_space;
 		uint64_t layer_i(layers.size() - 1);
 		
@@ -176,41 +182,41 @@ int main()
 			int32_t index = (current_last + i) % layers_count;
 
 			const uint32_t side_id = (index + 2) % layers_count;
-			const Layer& l_side = layers[index];
 
 			const Layer& l = layers[index];
-			const float scale = 2.0f / (l.dist + 0.1f);
+			const float scale = 4.0f / (l.dist + 0.1f);
 
 			sf::RenderStates states;
-			states.transform.translate(mid_window);
+			states.transform.translate(2.0f * mid_window);
 			states.transform.scale(scale, scale);
 			states.transform.translate(-mid_layer);
+	
+			// Mid
+			renderer.render(l.render_data, states);
+
 			// Left
 			sf::RenderStates states_left = states;
 			states_left.transform.translate(-layer_conf.width, 0.0f);
-			renderer.render(l_side.render_data, states_left);
-			// Mid
-			renderer.render(l.render_data, states);
 			// Right
 			sf::RenderStates states_right = states;
 			states_right.transform.translate(layer_conf.width, 0.0f);
-			renderer.render(l_side.render_data, states_right);
-
+			
 			// Fake side id
-			renderer.renderGrass(l_side.render_data, states_left);
+			renderer.renderGrass(l.render_data, states_left);
 			renderer.renderGrass(l.render_data, states);
-			renderer.renderGrass(l_side.render_data, states_right);
+			renderer.renderGrass(l.render_data, states_right);
 
 			sf::VertexArray fade(sf::Quads, 4);
 			fade[0].position = sf::Vector2f(0.0f, 0.0f);
-			fade[1].position = sf::Vector2f(WinWidth, 0.0f);
-			fade[2].position = sf::Vector2f(WinWidth, WinHeight);
-			fade[3].position = sf::Vector2f(0.0f, WinHeight);
+			fade[1].position = sf::Vector2f(2.0f*WinWidth, 0.0f);
+			fade[2].position = sf::Vector2f(2.0f * WinWidth, 2.0f * WinHeight);
+			fade[3].position = sf::Vector2f(0.0f, 2.0f * WinHeight);
 
-			fade[0].color = sf::Color(255, 171, 133, (100.0f * l.dist / max_depth));
-			fade[1].color = sf::Color(255, 171, 133, (100.0f * l.dist / max_depth));
-			fade[2].color = sf::Color(255, 255, 255, (100.0f * l.dist / max_depth));
-			fade[3].color = sf::Color(255, 255, 255, (100.0f * l.dist / max_depth));
+			const float alpha_factor = 110.0f;
+			fade[0].color = sf::Color(255, 171, 133, (alpha_factor * l.dist / max_depth));
+			fade[1].color = sf::Color(255, 171, 133, (alpha_factor * l.dist / max_depth));
+			fade[2].color = sf::Color(255, 255, 255, (alpha_factor * l.dist / max_depth));
+			fade[3].color = sf::Color(255, 255, 255, (alpha_factor * l.dist / max_depth));
 
 			window.draw(fade);
 			--layer_i;

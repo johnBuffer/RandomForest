@@ -37,28 +37,35 @@ struct Layer
 		, back_to_end(false)
 	{}
 
-	void init()
+	void init(bool no_tree)
 	{
 		trees.clear();
 		grass.clear();
 		solver.clear();
 
-		const float trees_zone = config.width - config.gap;
-		const uint32_t trees_count = RNGf::getUnder(config.trees_count);
-		for (uint32_t i(trees_count); i--;) {
-			Vec2 tree_pos(RNGf::getUnder(trees_zone), config.height);
-			if (tree_pos.x > trees_zone * 0.5f) {
-				tree_pos.x += config.gap;
+		if (!no_tree) {
+			const float trees_zone = 3.0f * config.width - config.gap;
+			const uint32_t trees_count = RNGf::getUnder(config.trees_count);
+			for (uint32_t i(trees_count); i--;) {
+				Vec2 tree_pos(RNGf::getRange(trees_zone), config.height);
+				tree_pos.x += sign(tree_pos.x) * config.gap * 0.5f;
+				tree_pos.x += config.width * 0.5f;
+
+				TreeConf conf = config.tree_conf;
+				const float size_var = RNGf::getRange(-20.0f, 20.0f);
+				conf.branch_length += size_var;
+				conf.branch_width += 2.0f * size_var;
+				conf.branch_deviation += -0.1f * std::min(size_var, 0.0f);
+
+				if (RNGf::getUnder(1.0f) < 0.1f) {
+					conf.branch_length *= 1.5f;
+					conf.branch_width *= 2.0f;
+					conf.branch_deviation *= 0.8f;
+				}
+
+				trees.push_back(Tree(tree_pos, conf));
+				trees.back().fullGrow();
 			}
-
-			TreeConf conf = config.tree_conf;
-			const float size_var = RNGf::getRange(-20.0f, 20.0f);
-			conf.branch_length += size_var;
-			conf.branch_width += 2.0f * size_var;
-			conf.branch_deviation += -0.1f * std::min(size_var, 0.0f);
-
-			trees.push_back(Tree(tree_pos, conf));
-			trees.back().fullGrow();
 		}
 
 		for (float x(0.0f); x < config.width; x += 1.0f) {
@@ -74,7 +81,7 @@ struct Layer
 		for (const Wind& w : wind) {
 			for (VerletPoint::ptr pt : solver.getPoints()) {
 				if (w.isOver(pt->coords)) {
-					pt->acceleration += Vec2(w.strength * 5.0f, 0.0f);
+					pt->acceleration += Vec2(w.strength, 0.0f);
 				}
 			}
 		}

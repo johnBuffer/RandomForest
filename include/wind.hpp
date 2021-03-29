@@ -17,11 +17,11 @@ struct Wind
 
 	}
 
-	void update(float dt, float max_x)
+	void update(float dt, float start_x, float end_x)
 	{
 		pos_x += speed * dt;
-		if (pos_x - width * 0.5f > max_x) {
-			pos_x = -width * 0.5f;
+		if (pos_x - width * 0.5f > end_x) {
+			pos_x = start_x - width * 0.5f;
 		}
 	}
 
