@@ -14,7 +14,7 @@ public:
 	TreeRenderer(sf::RenderTarget& target)
 		: m_target(target)
 	{
-		texture.loadFromFile("../res/leaf.png");
+		texture.loadFromFile("res/leaf.png");
 		leaf_sprite.setTexture(texture);
 		leaf_sprite.setOrigin(800, 1485);
 		leaf_sprite.setScale(0.02f, 0.02f);

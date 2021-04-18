@@ -23,7 +23,7 @@ int main()
 	sf::ContextSettings settings;
 	settings.antialiasingLevel = 4;
 
-    sf::RenderWindow window(sf::VideoMode(2*WinWidth, 2*WinHeight), "Tree", sf::Style::Fullscreen, settings);
+    sf::RenderWindow window(sf::VideoMode(WinWidth, WinHeight), "Tree", sf::Style::Default, settings);
 	window.setFramerateLimit(60);
 	//window.setVerticalSyncEnabled(false);
 
@@ -161,7 +161,7 @@ int main()
 		}, layers_count);
 		group.waitExecutionDone();
 
-		const float scroll_speed = 1.0f;
+		const float scroll_speed = 0.3f;
 		for (Layer& l : layers) {
 			l.dist -= scroll_speed * dt;
 			if (l.back_to_end) {
@@ -184,10 +184,10 @@ int main()
 			const uint32_t side_id = (index + 2) % layers_count;
 
 			const Layer& l = layers[index];
-			const float scale = 4.0f / (l.dist + 0.1f);
+			const float scale = 2.0f / (l.dist + 0.1f);
 
 			sf::RenderStates states;
-			states.transform.translate(2.0f * mid_window);
+			states.transform.translate(mid_window);
 			states.transform.scale(scale, scale);
 			states.transform.translate(-mid_layer);
 	
@@ -227,3 +227,11 @@ int main()
 
     return 0;
 }
+
+#if defined(_WIN32)
+#include <windows.h>
+int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hInstPrev, PSTR cmdline,
+	int cmdshow) {
+	return main();
+}
+#endif

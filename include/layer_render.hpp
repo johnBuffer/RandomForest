@@ -136,7 +136,7 @@ struct LayerRender
 				// Geometry
 				grass_va[global_offset + 4 * i + 0].position = sf::Vector2f(current_pt.x - width * v.y, current_pt.y + width * v.x);
 				grass_va[global_offset + 4 * i + 1].position = sf::Vector2f(current_pt.x + width * v.y, current_pt.y - width * v.x);
-				width *= 0.5f;
+				width *= 0.4f;
 				grass_va[global_offset + 4 * i + 2].position = sf::Vector2f(next_pt.x + width * v.y, next_pt.y - width * v.x);
 				grass_va[global_offset + 4 * i + 3].position = sf::Vector2f(next_pt.x - width * v.y, next_pt.y + width * v.x);
 				// Color
@@ -170,7 +170,7 @@ struct LayerRenderer
 	LayerRenderer(sf::RenderTarget& target_)
 		: target(target_)
 	{
-		texture.loadFromFile("../res/leaf.png");
+		texture.loadFromFile("res/leaf.png");
 	}
 
 	void render(const LayerRender& layer, sf::RenderStates states)
